@@ -6,7 +6,130 @@
 <meta name="robots" content="noindex">
 <title>Csomagoló · Nyomozóiroda</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="motor/stilus.css">
+<style>
+/* ============================================================
+   Nyomozóiroda — közös stílus
+   Témák (az ügyfájl "tema" mezője): noir1920 · vadasz · modern · borzongos
+   Betűk: felület = a telefon rendszerbetűje · nagy címek = díszbetű · iratok = könyvbetű, írógép, kézírás
+   ============================================================ */
+:root, html[data-skin="noir1920"]{
+  --bg:#15241c; --bg-2:#1d3127; --bg-3:#26402f; --bg-ink:#f7f0de; --bg-muted:#cfc3a6; --bg-line:#3b5444;
+  --paper:#fcf7ea; --paper-2:#f2e9d2; --ink:#1b1812; --muted:#5a5142; --line:#d6c7a6;
+  --accent:#8a5f1f; --accent-ink:#fffaf0; --accent-soft:#f1dfb6; --stamp:#a3312a; --ok:#2c6a43; --ok-soft:#dcebd9; --hl:#f3dc9c;
+  --f-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --f-display:"DM Serif Display", Georgia, "Times New Roman", serif;
+  --f-doc:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-type:"Courier Prime", "Courier New", Courier, monospace;
+  --f-hand:"Caveat", "Segoe Print", "Bradley Hand", cursive;
+}
+html[data-skin="vadasz"]{
+  --bg:#1e2a1b; --bg-2:#283724; --bg-3:#33452e; --bg-ink:#f4efe0; --bg-muted:#c6c8ab; --bg-line:#4a5a41;
+  --paper:#f7f2e4; --paper-2:#ece3cb; --ink:#1d1b15; --muted:#575343; --line:#cdbf9f;
+  --accent:#7a4c1f; --accent-ink:#fff8ec; --accent-soft:#ecd9b4; --stamp:#8e2b1f; --ok:#36643c; --ok-soft:#dde9d8; --hl:#ead7a0;
+  --f-display:"Cormorant Garamond", Garamond, Georgia, serif;
+}
+html[data-skin="modern"]{
+  --bg:#eef1f5; --bg-2:#e2e7ee; --bg-3:#d5dce6; --bg-ink:#111821; --bg-muted:#4d5a69; --bg-line:#c4cdd8;
+  --paper:#ffffff; --paper-2:#f3f5f8; --ink:#111821; --muted:#4d5a69; --line:#d7dde5;
+  --accent:#1d55b0; --accent-ink:#ffffff; --accent-soft:#dbe6f8; --stamp:#c0392b; --ok:#1e7a4a; --ok-soft:#dcf0e3; --hl:#fff0b3;
+  --f-display:"Archivo", system-ui, sans-serif;
+}
+html[data-skin="borzongos"]{
+  --bg:#140f10; --bg-2:#1f1718; --bg-3:#2b2021; --bg-ink:#f1e6da; --bg-muted:#bda998; --bg-line:#433435;
+  --paper:#f1e8dc; --paper-2:#e4d7c5; --ink:#1b1312; --muted:#5d4b44; --line:#c6b09a;
+  --accent:#8b1e2d; --accent-ink:#fff4ee; --accent-soft:#ecd0c8; --stamp:#8b1e2d; --ok:#3d6b46; --ok-soft:#dde8db; --hl:#ead0a4;
+  --f-display:"IM Fell English", Georgia, serif;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--bg-ink);font-family:var(--f-ui);font-size:18px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+h1,h2,h3{line-height:1.2;margin:0;text-wrap:balance}
+h1{font-family:var(--f-display);font-weight:400}
+h2,h3{font-family:var(--f-ui);font-weight:700}
+p{margin:0}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid var(--hl);outline-offset:2px}
+
+/* ---------- Gombok, mezők ---------- */
+.gomb{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:54px;padding:13px 20px;border-radius:14px;border:2px solid var(--accent);background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:18px;line-height:1.2;text-align:center;text-decoration:none}
+.gomb.masod{background:transparent;color:inherit;border-color:currentColor}
+.gomb.halk{background:transparent;border-color:transparent;color:inherit;min-height:44px;padding:8px 10px}
+.gomb.veszely{background:var(--stamp);border-color:var(--stamp);color:#fff}
+.gomb.teljes{width:100%}
+.gomb svg{width:20px;height:20px;flex:0 0 20px}
+.gomb:disabled{opacity:.45;cursor:not-allowed}
+.gomb:active:not(:disabled){transform:translateY(1px)}
+.mezo{width:100%;min-height:58px;padding:14px 16px;border-radius:14px;border:2px solid var(--line);background:#fff;color:#16130e;font-size:20px}
+.mezo:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+.mezo.kod{font-family:var(--f-type);font-weight:700;letter-spacing:.3em;text-align:center;font-size:30px}
+textarea.mezo{min-height:150px;font-size:18px;line-height:1.5}
+label.cimke{display:block;font-weight:700;margin:14px 0 6px}
+
+/* ---------- Lap (kártya) ---------- */
+.lap{background:var(--paper);color:var(--ink);border-radius:18px;padding:22px 20px;border:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.16);display:flex;flex-direction:column;gap:12px;min-width:0}
+.lap h2{font-size:24px}
+.lap h3{font-size:20px}
+.lap .halv,.halv{color:var(--muted)}
+.kicsi{font-size:15px}
+.felirat{font-family:var(--f-ui);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.cimke-pill{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--paper-2);color:var(--muted);white-space:nowrap}
+.sor{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.sor.szet{justify-content:space-between}
+.oszlop{display:flex;flex-direction:column;gap:14px}
+.racs{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.racs > *{min-width:0}
+.ertesites{padding:14px 16px;border-radius:12px;background:var(--hl);color:#2b2112;border:1px solid rgba(0,0,0,.1)}
+.ertesites.hiba{background:#f7d9d1;color:#4a1a12}
+.ertesites.ok{background:var(--ok-soft);color:#173b20}
+
+/* ============================================================
+   IRATOK — telefonon és nyomtatásban
+   ============================================================ */
+.irat{position:relative;background:#fbf6e8;color:#1f1a12;border:1px solid #cdbf9f;padding:22px 20px;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.12);display:flex;flex-direction:column;gap:10px;break-inside:avoid;page-break-inside:avoid;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-family:var(--f-doc)}
+.irat .i-szoveg{white-space:pre-wrap;overflow-wrap:anywhere;font-size:18px;line-height:1.6}
+.irat .i-fej{display:flex;justify-content:space-between;gap:12px;font-family:var(--f-type);font-weight:700;letter-spacing:.14em;font-size:14px;border-bottom:2px solid #1f1a12;padding-bottom:6px}
+.irat .i-cim{font-family:var(--f-doc);font-weight:600;font-size:20px;line-height:1.3}
+.irat .i-meta{font-family:var(--f-type);font-size:14px;color:#5b4f3a}
+.irat .i-azon{position:absolute;top:6px;right:10px;font-family:var(--f-type);font-size:11px;color:#8a7b60}
+.irat .i-alairas{font-family:var(--f-hand);font-size:27px;line-height:1.1;align-self:flex-end;margin-top:6px;border-top:1px solid #8a7b60;padding:4px 18px 0}
+.irat .i-pecset{position:absolute;right:20px;bottom:24px;width:96px;height:96px;border:3px double rgba(140,30,30,.55);border-radius:50%;display:flex;align-items:center;justify-content:center;transform:rotate(-14deg);pointer-events:none}
+.irat .i-pecset span{font-family:var(--f-type);font-size:10.5px;font-weight:700;letter-spacing:.04em;color:rgba(140,30,30,.65);text-align:center;line-height:1.2;padding:8px;text-transform:uppercase}
+
+/* írógépes hatás: a fejléc írógép, a szöveg jól olvasható könyvbetű */
+.i-jegyzokonyv,.i-dokumentum{background:#fbf7ec}
+.i-jegyzokonyv .i-szoveg,.i-dokumentum .i-szoveg,.i-nyugta .i-szoveg{font-family:var(--f-doc)}
+.i-vallomas .i-szoveg{font-style:italic}
+.i-tavirat{background:#f2e7c9;border:2px solid #a8915f}
+.i-tavirat .i-fej{color:#7a2a1e;border-color:#7a2a1e}
+.i-tavirat .i-szoveg{font-family:var(--f-type);font-size:17px;letter-spacing:.04em;background:#fffaf0;padding:10px 12px;border:1px solid #c9b88f}
+.i-level{background:#fdf9ef}
+.i-level .i-szoveg{font-style:italic;font-size:19px}
+.i-level .i-datum{font-style:italic;align-self:flex-end;color:#4b3f2c}
+.i-naplo .i-szoveg,.i-feljegyzes .i-szoveg{font-family:var(--f-hand);font-size:27px;line-height:1.25}
+.i-naplo .i-datum,.i-feljegyzes .i-datum{font-family:var(--f-hand);font-size:24px;align-self:flex-end}
+.i-naplo .i-cim,.i-feljegyzes .i-cim{font-family:var(--f-hand);font-size:28px;font-weight:700}
+.i-naplo{background:repeating-linear-gradient(#fbf6e8 0 33px,#c9d3dd 33px 34px);background-color:#fbf6e8;border-left:4px double #b94a3c}
+.i-feljegyzes{background:#f7eebf;transform:rotate(-.5deg)}
+.i-nyugta{border-style:dashed}
+.i-ujsag{background:#efe8d6}
+.i-ujsag .i-ujsagfej{font-family:var(--f-type);font-size:13px;letter-spacing:.12em;text-transform:uppercase;border-bottom:3px double #1f1a12;padding-bottom:6px}
+.i-ujsag .i-ujsagcim{font-family:var(--f-display);font-size:28px;line-height:1.15}
+.i-ujsag .i-szoveg{font-size:17px;column-width:240px;column-gap:20px;text-align:justify;hyphens:auto}
+.i-fenykep{background:#fdfbf5;padding:14px 14px 18px}
+.i-fenykep .i-foto{border:1px solid #b9a77f}
+.i-fenykep .i-foto svg,.i-fenykep .i-foto img,.i-helyszinrajz .i-foto svg{display:block;width:100%;height:auto}
+.i-fenykep .i-felirat{font-family:var(--f-hand);font-size:26px;line-height:1.2;text-align:center}
+.i-fenykep .i-hatul{font-size:17px;color:#4b3f2c;border-top:1px dashed #b9a77f;padding-top:8px;font-style:italic}
+.i-helyszinrajz .rajz svg{display:block;width:100%;height:auto;border:1px solid #b9a77f}
+.i-helyszinrajz .jelmagy{margin:8px 0 0;padding-left:0;list-style:none;font-size:16px;display:grid;gap:4px}
+.i-egett{border:none;-webkit-mask-image:radial-gradient(130% 130% at 50% 45%,#000 60%,transparent 78%);mask-image:radial-gradient(130% 130% at 50% 45%,#000 60%,transparent 78%);background:radial-gradient(120% 120% at 50% 45%,#fbf6e8 52%,#c79a5c 70%,#3b2410 82%)}
+
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+</style>
 <style>
 body{font-size:17px}
 .keret{max-width:760px;margin:0 auto;padding:24px max(16px,env(safe-area-inset-right)) 60px max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:18px}
@@ -51,9 +174,445 @@ ul.lista{margin:0;padding-left:20px;display:grid;gap:4px}
 </main>
 
 <script type="module">
-import { ellenoriz, csomagol } from "./motor/csomag.mjs";
-import { temaBeallit } from "./motor/betuk.mjs";
-import { esc } from "./motor/iratok.mjs";
+const KOZOS = (() => {
+
+// Közös segédfüggvények — a böngésző (csapat-app, játékmesteri konzol) és a build script (Node) is ezt használja.
+// Semmi DOM-függés nincs benne, így Node 18+ alatt is fut.
+
+const subtle = globalThis.crypto.subtle;
+const enc = new TextEncoder();
+const dec = new TextDecoder();
+
+const ITER_KARTYA = 60000;   // egy fejtörő-kártya válaszának ellenőrzése
+const ITER_TITOK = 120000;   // jutalom / ládatartalom titkosítása a megfejtéssel
+const ITER_JM = 200000;      // játékmesteri rész titkosítása jelszóval
+
+/** Válasz egységesítése: ékezet, szóköz, írásjel nélkül, nagybetűvel. "22:05" → "2205", "Rózsakert" → "ROZSAKERT". */
+function norm(x) {
+  return String(x ?? "")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+const b64 = {
+  to(buf) {
+    const bytes = new Uint8Array(buf); let s = "";
+    for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+    return btoa(s);
+  },
+  from(str) {
+    const s = atob(str); const out = new Uint8Array(s.length);
+    for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
+    return out;
+  }
+};
+
+function veletlenSo(n = 16) {
+  const a = new Uint8Array(n); globalThis.crypto.getRandomValues(a); return b64.to(a);
+}
+
+async function pbkdf2Bits(jelszo, so, iter) {
+  const kulcs = await subtle.importKey("raw", enc.encode(jelszo), "PBKDF2", false, ["deriveBits"]);
+  return subtle.deriveBits({ name: "PBKDF2", salt: enc.encode(so), iterations: iter, hash: "SHA-256" }, kulcs, 256);
+}
+async function aesKulcs(jelszo, so, iter) {
+  const bits = await pbkdf2Bits(jelszo, so, iter);
+  return subtle.importKey("raw", bits, "AES-GCM", false, ["encrypt", "decrypt"]);
+}
+
+/** Kártyaválasz lenyomata. */
+async function lenyomat(valasz, so) {
+  return b64.to(await pbkdf2Bits(norm(valasz), so, ITER_KARTYA));
+}
+async function egyezik(valasz, so, hash) {
+  if (!norm(valasz)) return false;
+  return (await lenyomat(valasz, so)) === hash;
+}
+
+/** Tetszőleges JSON titkosítása jelszóval (AES-GCM). */
+async function titkosit(adat, jelszo, so, iter) {
+  const iv = new Uint8Array(12); globalThis.crypto.getRandomValues(iv);
+  const k = await aesKulcs(jelszo, so, iter);
+  const ct = await subtle.encrypt({ name: "AES-GCM", iv }, k, enc.encode(JSON.stringify(adat)));
+  return { iv: b64.to(iv), ct: b64.to(ct) };
+}
+/** Visszafejtés. Rossz jelszónál null-t ad (nem dob). */
+async function visszafejt(csomag, jelszo, so, iter) {
+  try {
+    const k = await aesKulcs(jelszo, so, iter);
+    const pt = await subtle.decrypt({ name: "AES-GCM", iv: b64.from(csomag.iv) }, k, b64.from(csomag.ct));
+    return JSON.parse(dec.decode(pt));
+  } catch (e) { return null; }
+}
+
+/** A fejtörő teljes kulcsa: a kártyák válaszai sorrendben. */
+const fejtoroKulcs = valaszok => valaszok.map(norm).join("|");
+
+/* ---------- Eredménykód: a csapat telefonja ezt mutatja a végén, a játékmester beírja ---------- */
+const ABC = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // 32 jel, könnyen olvasható (nincs 0/O, 1/I)
+function ellenorzo(n, sz) { let h = 7; for (const c of String(n) + sz) h = (h * 31 + c.charCodeAt(0)) % 1024; return h; }
+/** pont: 0–1023, valasztasok: 4 db 0–7 közötti index (tettes, indíték, fegyver, időpont), sorszam: a csapat 1–31 */
+function eredmenyKod(pont, valasztasok, so = "") {
+  const p = Math.max(0, Math.min(1023, Math.round(pont)));
+  const v = valasztasok.map(x => Math.max(0, Math.min(7, x | 0)));
+  let n = p; for (const x of v) n = n * 8 + x;            // 10 + 12 bit
+  const c = ellenorzo(n, so);                               // 10 bit
+  let big = n * 1024 + c, s = "";
+  for (let i = 0; i < 7; i++) { s = ABC[big % 32] + s; big = Math.floor(big / 32); }
+  return s.slice(0, 3) + "-" + s.slice(3);
+}
+function eredmenyKodOlvas(kod, so = "") {
+  const s = String(kod || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
+  if (s.length !== 7) return null;
+  let big = 0;
+  for (const ch of s) { const i = ABC.indexOf(ch); if (i < 0) return null; big = big * 32 + i; }
+  const c = big % 1024, n = Math.floor(big / 1024);
+  if (ellenorzo(n, so) !== c) return null;
+  let m = n; const v = [];
+  for (let i = 0; i < 4; i++) { v.unshift(m % 8); m = Math.floor(m / 8); }
+  return { pont: m, valasztasok: v };
+}
+
+/* ---------- Idő ---------- */
+const ido = m => { m = Math.max(0, Math.floor(m)); return Math.floor(m / 60) + ":" + String(m % 60).padStart(2, "0"); };
+/** "1905" vagy "19:05" → a mai (vagy tegnapi, ha éjfél utáni) 19:05 időbélyege */
+function inditokodbol(kod, most = Date.now()) {
+  const d = String(kod || "").replace(/\D/g, "");
+  if (d.length !== 4) return null;
+  const h = +d.slice(0, 2), mi = +d.slice(2);
+  if (h > 23 || mi > 59) return null;
+  const t = new Date(most); t.setHours(h, mi, 0, 0);
+  let ts = t.getTime();
+  if (ts - most > 60 * 60000) ts -= 24 * 3600000;   // éjfél után indított játék
+  return ts;
+}
+function inditokod(ts) { const d = new Date(ts); return String(d.getHours()).padStart(2, "0") + String(d.getMinutes()).padStart(2, "0"); }
+
+/* ---------- Pontozás (a csapat telefonja számolja a fejtörő- és ládapontokat) ---------- */
+function fejtoroPont(pontozas, nehezseg, sugoSzam) {
+  const alap = (pontozas.fejtoro || {})[nehezseg] ?? 8;
+  return Math.max(Math.ceil(alap / 2), alap - sugoSzam * (pontozas.sugo ?? 2));
+}
+function ladaPont(pontozas, percAKapuUtan, sugoSzam = 0) {
+  const sav = pontozas.lada || [10, 8, 6, 4];      // 0–10 perc, 10–20, 20–30, utána
+  const i = Math.min(sav.length - 1, Math.floor(Math.max(0, percAKapuUtan) / 10));
+  return Math.max(2, sav[i] - sugoSzam * (pontozas.sugo ?? 2));
+}
+
+return { ITER_KARTYA, ITER_TITOK, ITER_JM, norm, b64, veletlenSo, lenyomat, egyezik, titkosit, visszafejt, fejtoroKulcs, eredmenyKod, eredmenyKodOlvas, ido, inditokodbol, inditokod, fejtoroPont, ladaPont };
+})();
+const IRATOK = (() => {
+
+// Iratok (bizonyítékok) megjelenítése HTML-ként — telefonon és nyomtatásban ugyanúgy.
+// Irattípusok: jegyzokonyv, vallomas, level, tavirat, naplo, feljegyzes, nyugta, dokumentum, ujsag, fenykep, helyszinrajz
+// Mezők: tipus, cim, datum, hely, szoveg, alairas, pecset, egett (true), abra (beépített rajz neve), kep (saját kép útvonala), felirat, rajz (helyszínrajz adatai)
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+const INK = "#3b2a17";
+const S = `fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"`;
+const SF = `stroke="${INK}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"`;
+
+/** Beépített rajzok a „fényképekhez”. Mindegyik 400×300-as vásznon. */
+const ABRAK = {
+  zsebora: `<path ${S} d="M200 40 v-18 M188 22 h24"/><circle cx="200" cy="58" r="10" ${S}/>
+    <circle cx="200" cy="160" r="92" ${S}/><circle cx="200" cy="160" r="80" fill="#f3e6c8" ${SF} stroke-width="2"/>
+    ${Array.from({ length: 12 }, (_, i) => { const a = i * Math.PI / 6; return `<line x1="${200 + 68 * Math.sin(a)}" y1="${160 - 68 * Math.cos(a)}" x2="${200 + 76 * Math.sin(a)}" y2="${160 - 76 * Math.cos(a)}" stroke="${INK}" stroke-width="${i % 3 ? 2 : 4}"/>`; }).join("")}
+    <line x1="200" y1="160" x2="${200 + 42 * Math.sin(-Math.PI / 6 * 1.75)}" y2="${160 - 42 * Math.cos(-Math.PI / 6 * 1.75)}" stroke="${INK}" stroke-width="6" stroke-linecap="round"/>
+    <line x1="200" y1="160" x2="262" y2="160" stroke="${INK}" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="200" cy="160" r="5" fill="${INK}"/>
+    <path ${S} stroke-width="2" d="M292 120 q40 -30 70 10 q20 30 -10 60"/><path ${S} stroke-width="2" d="M300 135 q30 -20 50 8"/>`,
+  setapalca: `<path ${S} stroke-width="9" d="M95 270 L300 70"/><path ${S} stroke-width="4" d="M95 270 L300 70" stroke="#f3e6c8"/>
+    <ellipse cx="312" cy="58" rx="26" ry="20" transform="rotate(-45 312 58)" fill="#d8d1c0" ${SF}/>
+    <path ${S} stroke-width="2" d="M298 52 q10 -8 22 0 M304 64 q10 -8 22 0"/><path ${S} d="M285 85 l18 -18"/>
+    <circle cx="322" cy="44" r="3" fill="${INK}"/><circle cx="330" cy="58" r="2" fill="${INK}"/><path ${S} stroke-width="1.5" d="M335 40 q14 -6 24 4"/>`,
+  zsebkendo: `<path ${S} d="M90 70 L310 60 L320 240 L100 250 Z"/><path ${S} stroke-width="1.5" stroke-dasharray="4 6" d="M105 82 L298 74 L306 226 L114 236 Z"/>
+    <path fill="#7a2a1e" opacity=".75" d="M190 140 q30 -18 46 6 q14 26 -18 34 q-34 8 -38 -14 q-2 -16 10 -26z"/><circle cx="250" cy="175" r="6" fill="#7a2a1e" opacity=".6"/>
+    <text x="270" y="225" font-family="Georgia,serif" font-style="italic" font-size="22" fill="${INK}">K. I.</text>`,
+  lampas: `<path ${S} d="M60 250 h280"/><path ${S} d="M250 250 V90 M236 90 h28 M250 90 l40 -40"/><circle cx="292" cy="48" r="8" ${S}/>
+    <g transform="rotate(-70 140 225)"><rect x="110" y="150" width="60" height="80" rx="6" ${S}/><path ${S} d="M110 150 l30 -26 l30 26 M140 124 v-14"/><path ${S} stroke-width="1.5" d="M120 165 h40 M120 215 h40"/></g>
+    <path fill="${INK}" opacity=".15" d="M70 250 q60 -20 120 0z"/>`,
+  sziluett: `<ellipse cx="200" cy="150" rx="120" ry="130" ${S}/><ellipse cx="200" cy="150" rx="108" ry="118" fill="#e9dcbc" ${SF} stroke-width="1.5"/>
+    <path fill="#5a4630" d="M200 80 q-38 0 -40 44 q0 30 18 46 q-56 14 -68 70 q60 30 180 0 q-12 -56 -68 -70 q18 -16 18 -46 q-2 -44 -40 -44z"/>`,
+  gyongysor: `${Array.from({ length: 23 }, (_, i) => { const a = Math.PI * (0.1 + 0.8 * i / 22); return `<circle cx="${200 - 150 * Math.cos(a)}" cy="${60 + 150 * Math.sin(a)}" r="10" fill="#f8f2e4" ${SF} stroke-width="2"/>`; }).join("")}
+    ${Array.from({ length: 19 }, (_, i) => { const a = Math.PI * (0.15 + 0.7 * i / 18); return `<circle cx="${200 - 115 * Math.cos(a)}" cy="${60 + 115 * Math.sin(a)}" r="8" fill="#f8f2e4" ${SF} stroke-width="2"/>`; }).join("")}`,
+  fokonyv: `<path ${S} d="M50 80 L200 95 L350 80 L350 240 L200 255 L50 240 Z M200 95 V255"/>
+    ${Array.from({ length: 7 }, (_, i) => `<path ${S} stroke-width="1.2" d="M68 ${115 + i * 18} L185 ${125 + i * 18}"/>`).join("")}
+    <path ${S} stroke-width="2.5" d="M215 120 l18 10 l-10 14 l20 8 l-8 16 l22 6 l-12 18 l20 10 l-14 16 l16 12 l-10 14"/>
+    <text x="72" y="110" font-family="Courier New,monospace" font-size="13" fill="${INK}">A. S. ...... 200 P</text>`,
+  kulcs: `<circle cx="120" cy="150" r="42" ${S}/><circle cx="120" cy="150" r="16" ${S}/><path ${S} d="M162 150 H330 M300 150 v26 M280 150 v18 M320 150 v20"/>`,
+  boritek: `<rect x="70" y="80" width="260" height="160" ${S}/><path ${S} d="M70 80 L200 170 L330 80"/><circle cx="200" cy="170" r="16" fill="#7a2a1e" opacity=".8"/>
+    <path ${S} stroke-width="1.5" d="M110 205 h90 M110 220 h60"/>`,
+  uveg: `<path ${S} d="M180 50 h40 v40 q30 20 30 60 v100 q0 10 -10 10 h-80 q-10 0 -10 -10 v-100 q0 -40 30 -60 z"/><rect x="165" y="150" width="70" height="50" ${S} stroke-width="2"/>
+    <path ${S} stroke-width="1.5" d="M175 168 h50 M175 182 h36"/>`,
+  labnyom: `${[[90, 220, -20], [150, 170, -15], [210, 130, -18], [270, 85, -14]].map(([x, y, r], i) => `<g transform="translate(${x} ${y}) rotate(${r}) scale(${i % 2 ? -1 : 1} 1)"><ellipse cx="0" cy="0" rx="14" ry="30" fill="${INK}" opacity=".55"/><ellipse cx="0" cy="40" rx="11" ry="12" fill="${INK}" opacity=".55"/></g>`).join("")}
+    <path ${S} stroke-width="1.5" d="M300 230 h60 M300 222 v16 M360 222 v16"/><text x="308" y="258" font-family="Courier New,monospace" font-size="14" fill="${INK}">30 cm</text>`,
+  malomkerek: `<circle cx="200" cy="150" r="110" ${S}/><circle cx="200" cy="150" r="22" ${S}/>
+    ${Array.from({ length: 12 }, (_, i) => { const a = i * Math.PI / 6; return `<line x1="${200 + 22 * Math.cos(a)}" y1="${150 + 22 * Math.sin(a)}" x2="${200 + 110 * Math.cos(a)}" y2="${150 + 110 * Math.sin(a)}" stroke="${INK}" stroke-width="3"/><rect x="${200 + 100 * Math.cos(a) - 10}" y="${150 + 100 * Math.sin(a) - 10}" width="20" height="20" transform="rotate(${i * 30} ${200 + 100 * Math.cos(a)} ${150 + 100 * Math.sin(a)})" ${S} stroke-width="2"/>`; }).join("")}
+    <path ${S} stroke-width="2" d="M40 270 q40 -12 80 0 t80 0 t80 0 t80 0"/>`,
+  kes: `<path ${S} d="M90 200 L270 110 q30 -10 40 0 q-10 30 -40 30 L120 220 Z"/><path ${S} d="M90 200 l-40 30 q-10 10 0 18 q8 6 18 -2 l52 -26"/>`,
+  pohar: `<path ${S} d="M150 60 h100 l-14 110 q-6 30 -36 30 q-30 0 -36 -30 z M200 200 v50 M160 250 h80"/><path fill="#7a2a1e" opacity=".5" d="M158 110 h84 l-6 56 q-6 22 -36 22 q-30 0 -36 -22z"/>`
+};
+const ABRA_NEVEK = Object.keys(ABRAK);
+
+function abraSvg(nev, cim) {
+  const tartalom = ABRAK[nev] || `<rect x="80" y="70" width="240" height="160" ${S}/><text x="200" y="160" text-anchor="middle" font-family="Georgia,serif" font-size="20" fill="${INK}">${esc(cim || "tárgy")}</text>`;
+  return `<svg viewBox="0 0 400 300" role="img" aria-label="${esc(cim || nev)}"><defs><filter id="szemcse"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 .23  0 0 0 0 .16  0 0 0 0 .09  0 0 0 .18 0"/></filter>
+    <radialGradient id="vignetta" cx="50%" cy="50%" r="70%"><stop offset="55%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#2a1c0c" stop-opacity=".45"/></radialGradient></defs>
+    <rect width="400" height="300" fill="#e8d9b5"/>${tartalom}<rect width="400" height="300" filter="url(#szemcse)"/><rect width="400" height="300" fill="url(#vignetta)"/></svg>`;
+}
+
+/** Helyszínrajz rajzolása 0–100-as koordinátákból.
+ * rajz: { szobak:[{nev,x,y,w,h}], ajtok:[{x,y,irany:"v"|"f"}], jelek:[{x,y,jel,cimke}], vonalak:[{pontok:[[x,y],…],szaggatott,cimke}] } */
+function rajzSvg(r) {
+  const X = v => 20 + v * 5.6, Y = v => 20 + v * 3.6;
+  const szobak = (r.szobak || []).map(s => `<rect x="${X(s.x)}" y="${Y(s.y)}" width="${s.w * 5.6}" height="${s.h * 3.6}" fill="none" stroke="${INK}" stroke-width="3"/>
+    <text x="${X(s.x + s.w / 2)}" y="${Y(s.y) + 18}" text-anchor="middle" font-family="Courier New,monospace" font-size="13" fill="${INK}">${esc(s.nev)}</text>`).join("");
+  const ajtok = (r.ajtok || []).map(a => a.irany === "v"
+    ? `<line x1="${X(a.x)}" y1="${Y(a.y) - 12}" x2="${X(a.x)}" y2="${Y(a.y) + 12}" stroke="#e8d9b5" stroke-width="7"/><path d="M${X(a.x)} ${Y(a.y) - 12} q14 12 0 24" fill="none" stroke="${INK}" stroke-width="1.5"/>`
+    : `<line x1="${X(a.x) - 12}" y1="${Y(a.y)}" x2="${X(a.x) + 12}" y2="${Y(a.y)}" stroke="#e8d9b5" stroke-width="7"/><path d="M${X(a.x) - 12} ${Y(a.y)} q12 14 24 0" fill="none" stroke="${INK}" stroke-width="1.5"/>`).join("");
+  const vonalak = (r.vonalak || []).map(v => `<polyline points="${v.pontok.map(([x, y]) => X(x) + "," + Y(y)).join(" ")}" fill="none" stroke="#7a2a1e" stroke-width="2.5" ${v.szaggatott ? 'stroke-dasharray="7 6"' : ""}/>`).join("");
+  let n = 0;
+  const jelmagy = [];
+  const jelek = (r.jelek || []).map(j => {
+    const sz = j.jel || String(++n);
+    if (j.cimke) jelmagy.push(`<li><b>${esc(sz)}</b> — ${esc(j.cimke)}</li>`);
+    return `<circle cx="${X(j.x)}" cy="${Y(j.y)}" r="11" fill="#f3e6c8" stroke="#7a2a1e" stroke-width="2"/><text x="${X(j.x)}" y="${Y(j.y) + 5}" text-anchor="middle" font-family="Courier New,monospace" font-weight="700" font-size="13" fill="#7a2a1e">${esc(sz)}</text>`;
+  }).join("");
+  (r.vonalak || []).forEach(v => { if (v.cimke) jelmagy.push(`<li><b>- - -</b> ${esc(v.cimke)}</li>`); });
+  return `<div class="rajz"><svg viewBox="0 0 600 400" role="img" aria-label="Helyszínrajz"><rect width="600" height="400" fill="#e8d9b5"/>
+    <g stroke="${INK}" stroke-opacity=".08">${Array.from({ length: 20 }, (_, i) => `<line x1="${i * 30}" y1="0" x2="${i * 30}" y2="400"/>`).join("")}${Array.from({ length: 14 }, (_, i) => `<line x1="0" y1="${i * 30}" x2="600" y2="${i * 30}"/>`).join("")}</g>
+    ${szobak}${ajtok}${vonalak}${jelek}<text x="580" y="388" text-anchor="end" font-family="Courier New,monospace" font-size="12" fill="${INK}">É ↑</text></svg>
+    ${jelmagy.length ? `<ul class="jelmagy">${jelmagy.join("")}</ul>` : ""}</div>`;
+}
+
+const szoveg = t => `<div class="i-szoveg">${esc(t)}</div>`;
+const fej = (felirat, d) => `<div class="i-fej"><span>${esc(felirat)}</span>${d.datum ? `<span>${esc(d.datum)}</span>` : ""}</div>`;
+const pecset = d => d.pecset ? `<div class="i-pecset" aria-hidden="true"><span>${esc(d.pecset)}</span></div>` : "";
+const alair = d => d.alairas ? `<div class="i-alairas">${esc(d.alairas)}</div>` : "";
+
+/** Egy irat HTML-je. opt.azonosito: megjelenjen-e a kis azonosító (nyomtatásban hasznos). */
+function irat(d, opt = {}) {
+  const t = d.tipus || "dokumentum";
+  const azon = opt.azonosito && d.id ? `<span class="i-azon">${esc(d.id)}</span>` : "";
+  const cimsor = d.cim ? `<div class="i-cim">${esc(d.cim)}</div>` : "";
+  let belso;
+  switch (t) {
+    case "jegyzokonyv":
+      belso = `${fej("JEGYZŐKÖNYV", d)}${cimsor}${d.hely ? `<div class="i-meta">${esc(d.hely)}</div>` : ""}${szoveg(d.szoveg)}${alair(d)}${pecset(d)}`; break;
+    case "vallomas":
+      belso = `${fej("TANÚVALLOMÁS", d)}${cimsor}${szoveg(d.szoveg)}${alair(d)}${pecset(d)}`; break;
+    case "tavirat":
+      belso = `<div class="i-fej"><span>TÁVIRAT</span><span>${esc(d.datum || "")}</span></div>${cimsor}${szoveg(String(d.szoveg || "").toUpperCase())}${alair(d)}`; break;
+    case "level": case "naplo": case "feljegyzes":
+      belso = `${d.datum ? `<div class="i-datum">${esc(d.datum)}</div>` : ""}${cimsor}${szoveg(d.szoveg)}${alair(d)}`; break;
+    case "nyugta":
+      belso = `${fej("NYUGTA", d)}${cimsor}${szoveg(d.szoveg)}${alair(d)}${pecset(d)}`; break;
+    case "ujsag":
+      belso = `<div class="i-ujsagfej">${esc(d.forras || "Fejérmegyei Hírlap")}${d.datum ? " · " + esc(d.datum) : ""}</div>${d.cim ? `<div class="i-ujsagcim">${esc(d.cim)}</div>` : ""}${szoveg(d.szoveg)}`; break;
+    case "fenykep":
+      belso = `<div class="i-foto">${d.kep ? `<img src="${esc(d.kep)}" alt="${esc(d.felirat || d.cim || "")}">` : abraSvg(d.abra, d.cim)}</div>
+        <div class="i-felirat">${esc(d.felirat || d.cim || "")}</div>${d.szoveg ? `<div class="i-hatul"><b>A kép hátoldalán:</b> ${esc(d.szoveg)}</div>` : ""}`; break;
+    case "helyszinrajz":
+      belso = `${fej("HELYSZÍNRAJZ", d)}${cimsor}${d.rajz ? rajzSvg(d.rajz) : d.abra ? `<div class="i-foto">${abraSvg(d.abra, d.cim)}</div>` : ""}${d.szoveg ? szoveg(d.szoveg) : ""}${alair(d)}`; break;
+    default:
+      belso = `${fej(d.fejlec || "ÜGYIRAT", d)}${cimsor}${szoveg(d.szoveg)}${alair(d)}${pecset(d)}`;
+  }
+  return `<article class="irat i-${esc(t)}${d.egett ? " i-egett" : ""}">${azon}${belso}</article>`;
+}
+
+return { esc, ABRAK, ABRA_NEVEK, irat };
+})();
+const BETUK = (() => {
+
+// Betűk és téma.
+// A felület a telefon saját rendszerbetűjét használja (iPhone: San Francisco, Android: Roboto) — ez a legolvashatóbb,
+// és nem kell letölteni. Letöltött díszbetű csak a nagy címekhez, az iratokhoz és a kézíráshoz kell.
+const ALAP = "family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Courier+Prime:wght@400;700&family=Caveat:wght@500;700";
+const DISZ = {
+  noir1920: "family=DM+Serif+Display:ital@0;1",
+  vadasz: "family=Cormorant+Garamond:wght@600;700",
+  modern: "family=Archivo:wght@700;800",
+  borzongos: "family=IM+Fell+English:ital@0;1"
+};
+function temaBeallit(tema) {
+  const t = DISZ[tema] ? tema : "noir1920";
+  document.documentElement.dataset.skin = t;
+  let l = document.getElementById("betuk");
+  if (!l) { l = document.createElement("link"); l.id = "betuk"; l.rel = "stylesheet"; document.head.appendChild(l); }
+  l.href = `https://fonts.googleapis.com/css2?${ALAP}&${DISZ[t]}&display=swap`;
+}
+
+return { temaBeallit };
+})();
+const CSOMAG = (() => {
+const K = KOZOS; const { ABRA_NEVEK } = IRATOK;
+// Ügyfájl ellenőrzése és csomagolása (titkosítása) — a böngészőben (Csomagoló) és a buildben (Node) is ezt használjuk.
+
+
+const TEMAK = ["noir1920", "vadasz", "modern", "borzongos"];
+const IRATTIPUSOK = ["jegyzokonyv", "vallomas", "level", "tavirat", "naplo", "feljegyzes", "nyugta", "dokumentum", "ujsag", "fenykep", "helyszinrajz"];
+const NEHEZSEGEK = ["konnyu", "kozepes", "nehez"];
+
+/* ---------------- Ellenőrzés ---------------- */
+function ellenoriz(u, fajl = "ügyfájl") {
+  const hibak = [], figy = [];
+  const h = m => hibak.push(m), f = m => figy.push(m);
+  const kell = (obj, mezok, hol) => mezok.forEach(m => { if (obj?.[m] === undefined || obj?.[m] === "" || obj?.[m] === null) h(`${hol}: hiányzik a „${m}” mező`); });
+
+  kell(u, ["id", "cim", "alcim", "tema", "idotartam", "bevezeto", "megbizas", "aldozat", "gyanusitottak", "dosszie", "fejtorok", "ladak", "vadirat", "megoldas", "pontozas"], fajl);
+  if (u.id && !/^[a-z0-9-]+$/.test(u.id)) h(`az „id” csak kisbetű, szám és kötőjel lehet (most: ${u.id})`);
+  if (u.tema && !TEMAK.includes(u.tema)) h(`ismeretlen téma: ${u.tema} (lehet: ${TEMAK.join(", ")})`);
+
+  const azonok = new Set();
+  const egyedi = (id, hol) => { if (!id) return h(`${hol}: hiányzik az „id”`); if (azonok.has(id)) h(`ismétlődő azonosító: ${id}`); azonok.add(id); };
+  const iratEll = (d, hol) => {
+    egyedi(d.id, hol);
+    if (!IRATTIPUSOK.includes(d.tipus)) h(`${hol} (${d.id}): ismeretlen irattípus „${d.tipus}”`);
+    if (d.tipus === "fenykep" && !d.kep && !d.abra) f(`${d.id}: a fényképnek nincs „abra” vagy „kep” mezője — egy üres keret jelenik meg`);
+    if (d.abra && !ABRA_NEVEK.includes(d.abra)) f(`${d.id}: ismeretlen ábra „${d.abra}” (lehet: ${ABRA_NEVEK.join(", ")})`);
+    if (d.tipus !== "fenykep" && d.tipus !== "helyszinrajz" && !d.szoveg) h(`${d.id}: üres irat (nincs „szoveg”)`);
+  };
+
+  (u.gyanusitottak || []).forEach((g, i) => { kell(g, ["id", "nev", "kapcsolat", "leiras"], `gyanúsított #${i + 1}`); egyedi(g.id, "gyanúsított"); });
+  (u.dosszie || []).forEach(d => iratEll(d, "dosszié"));
+  if (!(u.fejtorok || []).length) h("nincs egyetlen fejtörő sem");
+  (u.fejtorok || []).forEach(p => {
+    kell(p, ["id", "cim", "nehezseg", "kartyak", "magyarazat", "jutalom"], `fejtörő ${p.id || "?"}`);
+    egyedi(p.id, "fejtörő");
+    if (p.nehezseg && !NEHEZSEGEK.includes(p.nehezseg)) h(`${p.id}: a nehézség lehet ${NEHEZSEGEK.join(" / ")}`);
+    (p.kartyak || []).forEach((c, i) => { if (!c.szoveg) h(`${p.id}: a ${i + 1}. kártyának nincs szövege`); if (!K.norm(c.valasz)) h(`${p.id}: a ${i + 1}. kártyának nincs (vagy csak írásjelből álló) válasza`); });
+    if (!(p.sugok || []).length) f(`${p.id}: nincs súgó`);
+    (p.jutalom || []).forEach(d => iratEll(d, `${p.id} jutalma`));
+  });
+  if (!(u.ladak || []).length) f("nincs láda — a játék ládák nélkül is működik");
+  let elozo = -1;
+  (u.ladak || []).forEach(l => {
+    kell(l, ["id", "nev", "nyilik", "szamjegy", "kod", "rejtveny", "iratok"], `láda ${l.id || "?"}`);
+    egyedi(l.id, "láda");
+    const kod = String(l.kod ?? "");
+    if (!/^\d+$/.test(kod)) h(`${l.id}: a kód csak számjegy lehet (most: ${kod})`);
+    else if (kod.length !== +l.szamjegy) h(`${l.id}: a kód ${kod.length} jegyű, de a lakat ${l.szamjegy} jegyű`);
+    if (+l.nyilik < elozo) f(`${l.id}: korábban nyílik, mint az előző láda`);
+    if (+l.nyilik >= +u.idotartam) h(`${l.id}: a játék vége után nyílna`);
+    elozo = +l.nyilik;
+    kell(l.rejtveny, ["cim", "szoveg", "magyarazat"], `${l.id} rejtvénye`);
+    (l.iratok || []).forEach(d => iratEll(d, `${l.id} iratai`));
+  });
+  (u.vadirat?.kerdesek || []).forEach(q => {
+    if (!["tettes", "inditek", "fegyver", "ido"].includes(q.id)) h(`vádirat: ismeretlen kérdés „${q.id}” (tettes / inditek / fegyver / ido)`);
+    if (!Array.isArray(q.opciok) || q.opciok.length < 2 || q.opciok.length > 8) h(`vádirat „${q.id}”: 2–8 válaszlehetőség kell`);
+    if (!(q.helyes >= 0 && q.helyes < (q.opciok || []).length)) h(`vádirat „${q.id}”: a „helyes” index nem jó`);
+  });
+  if ((u.vadirat?.kerdesek || []).length !== 4) h("a vádiratban pontosan 4 kérdés kell: tettes, inditek, fegyver, ido");
+  return { hibak, figy };
+}
+
+/* ---------------- Átalakítás publikus (titkosított) formára ---------------- */
+async function csomagol(u, JELSZO) {
+  if (!JELSZO) throw new Error("Nincs játékmesteri jelszó.");
+  const fejtorok = [];
+  for (const p of u.fejtorok) {
+    const so = K.veletlenSo();
+    const kartyak = [];
+    for (const [i, c] of p.kartyak.entries()) kartyak.push({ cim: c.cim || "", szoveg: c.szoveg, hash: await K.lenyomat(c.valasz, so + ":" + i) });
+    const titok = await K.titkosit({ jutalom: p.jutalom, magyarazat: p.magyarazat }, K.fejtoroKulcs(p.kartyak.map(c => c.valasz)), so, K.ITER_TITOK);
+    fejtorok.push({ id: p.id, cim: p.cim, felvonas: p.felvonas || 1, nyilik: +p.nyilik || 0, nehezseg: p.nehezseg, mechanika: p.mechanika || "", kartyak, sugok: p.sugok || [], so, titok });
+  }
+  const ladak = [];
+  for (const l of u.ladak || []) {
+    const so = K.veletlenSo();
+    const titok = await K.titkosit({ iratok: l.iratok, magyarazat: l.rejtveny.magyarazat }, K.norm(l.kod), so, K.ITER_TITOK);
+    ladak.push({ id: l.id, nev: l.nev, hely: l.hely || "", nyilik: +l.nyilik, szamjegy: +l.szamjegy,
+      rejtveny: { cim: l.rejtveny.cim, szoveg: l.rejtveny.szoveg, sugok: l.rejtveny.sugok || [] },
+      iratDb: (l.iratok || []).length, so, hash: await K.lenyomat(l.kod, so + ":lada"), titok });
+  }
+  const jmSo = K.veletlenSo();
+  const jm = await K.titkosit(u, JELSZO, jmSo, K.ITER_JM);
+  return {
+    formatum: 1, id: u.id, cim: u.cim, alcim: u.alcim, tema: u.tema, jatekosok: u.jatekosok || "", idotartam: +u.idotartam, sorrend: u.sorrend ?? 0,
+    korszak: u.korszak || "", helyszin: u.helyszin || "", bevezeto: u.bevezeto, megbizas: u.megbizas,
+    aldozat: u.aldozat,
+    gyanusitottak: u.gyanusitottak.map(g => ({ id: g.id, nev: g.nev, kor: g.kor, kapcsolat: g.kapcsolat, leiras: g.leiras })),
+    dosszie: u.dosszie, fejtorok, ladak,
+    vadirat: { nyilik: +(u.vadirat.nyilik ?? 0), kerdesek: u.vadirat.kerdesek.map(q => ({ id: q.id, kerdes: q.kerdes, opciok: q.opciok })) },
+    pontozas: u.pontozas,
+    jm: { so: jmSo, ...jm }
+  };
+}
+
+
+/** Kész (csomagolt) ügyfájl-e? */
+const csomagolt = u => u && u.formatum === 1 && u.jm && u.jm.ct && Array.isArray(u.fejtorok);
+/** Az ügylista egy sora */
+const listaSor = u => ({ id: u.id, cim: u.cim, alcim: u.alcim, tema: u.tema, jatekosok: u.jatekosok || "", idotartam: +u.idotartam, sorrend: u.sorrend ?? 0,
+  fejtorok: (u.fejtorok || []).length, ladak: (u.ladak || []).length, sorrend: u.sorrend ?? 0 });
+
+return { ellenoriz, csomagol, csomagolt, listaSor };
+})();
+const UGYLISTA = (() => {
+const { listaSor } = CSOMAG;
+// Az elérhető ügyek listája.
+// GitHub Pages-en közvetlenül a repó "ugyek" mappáját olvassa (GitHub API), így egy új fájl feltöltése után
+// build nélkül megjelenik (a GitHub gyorsítótára miatt legfeljebb kb. 10 perc alatt).
+// Máshol (helyi próba, bemutató) az ugyek/lista.json fájlt használja.
+
+function githubRepo() {
+  const h = location.hostname;
+  if (!h.endsWith(".github.io")) return null;
+  const owner = h.split(".")[0];
+  const elso = location.pathname.split("/").filter(Boolean)[0];
+  const repo = elso && !elso.includes(".") ? elso : owner + ".github.io";
+  return { owner, repo };
+}
+
+const gyorstar = new Map();
+/** Egy ügyfájl betöltése (a lista már betöltötte, ha lehet) */
+async function ugyFajl(sor) {
+  const fajl = sor.fajl || sor.id + ".json";
+  if (gyorstar.has(fajl)) return gyorstar.get(fajl);
+  const r = await fetch(fajl.split("/").map(encodeURIComponent).join("/"), { cache: "no-cache" });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const u = await r.json(); gyorstar.set(fajl, u); return u;
+}
+
+async function ugyLista() {
+  const gh = githubRepo();
+  if (gh) {
+    try {
+      // a gyökérben és az ugyek mappában is keresünk (telefonos feltöltésnél a mappák elveszhetnek)
+      const helyek = ["", "ugyek"];
+      const listak = await Promise.all(helyek.map(async h => {
+        const r = await fetch(`https://api.github.com/repos/${gh.owner}/${gh.repo}/contents/${h}`, { headers: { Accept: "application/vnd.github+json" } });
+        return r.ok ? await r.json() : null;
+      }));
+      if (listak.some(Boolean)) {
+        const fajlok = listak.filter(Array.isArray).flat().filter(f => f.type === "file" && f.name.endsWith(".json") && f.name !== "lista.json" && f.name !== "package.json");
+        const sorok = await Promise.all(fajlok.map(async f => {
+          try { const u = await ugyFajl({ fajl: f.path }); return u.formatum === 1 && u.jm ? { ...listaSor(u), fajl: f.path } : null; }
+          catch (e) { return null; }
+        }));
+        const egyedi = new Map(); sorok.filter(Boolean).forEach(x => { if (!egyedi.has(x.id)) egyedi.set(x.id, x); });
+        return [...egyedi.values()].sort((a, b) => (b.sorrend - a.sorrend) || a.cim.localeCompare(b.cim, "hu"));
+      }
+    } catch (e) { /* tovább a lista.json-ra */ }
+  }
+  for (const hely of ["ugyek/lista.json", "lista.json"]) {
+    try {
+      const r = await fetch(hely, { cache: "no-cache" });
+      if (r.ok) { const elotag = hely.startsWith("ugyek/") ? "ugyek/" : ""; return ((await r.json()).ugyek || []).map(x => ({ ...x, fajl: x.fajl && x.fajl.includes("/") ? x.fajl : elotag + (x.fajl || x.id + ".json") })); }
+    } catch (e) {}
+  }
+  return [];
+}
+
+return { githubRepo, ugyFajl, ugyLista };
+})();
+
+
+const { ellenoriz, csomagol } = CSOMAG;
+const { temaBeallit } = BETUK;
+const { esc } = IRATOK;
 temaBeallit("noir1920");
 const $ = s => document.querySelector(s);
 let utolsoUrl = null;
