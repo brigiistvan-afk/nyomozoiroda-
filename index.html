@@ -729,6 +729,7 @@ const tarolo = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
 };
 let LISTA = null, U = null, A = null;
+let qrKod = "";
 let nezet = "feladatok", reszlet = null, aktaFul = "ugy", iratSzuro = "mind";
 const ures = () => ({ csapat: "", start: null, olvasott: false, kartya: {}, megoldott: {}, sugo: {}, ladak: {}, latott: {}, naplo: "", szabaly: false, vad: { valasz: [null, null, null, null], indoklas: "", leadva: null, kod: "" } });
 const kulcs = () => "nyi:" + U.id;
@@ -743,6 +744,20 @@ const vissza = m => hms(((m || 0) - perc()) * 60);
 async function indul() {
   temaBeallit("noir1920");
   LISTA = await ugyLista();
+  // QR-kódból érkezve: ?ugy=azonosito&kod=1905
+  const q = new URLSearchParams(location.search);
+  const qUgy = q.get("ugy"), qKod = (q.get("kod") || "").replace(/\D/g, "");
+  if (qUgy && LISTA.some(x => x.id === qUgy)) {
+    await ugyBetolt(qUgy);
+    const ts = inditokodbol(qKod);
+    if (ts && A.start !== ts) {
+      // egy korábbi, már lejárt játék maradéka ezen a telefonon? → tiszta lap
+      if (A.start && Date.now() - A.start > U.idotartam * 60000) { A = { ...ures(), csapat: A.csapat }; ment(); }
+      if (!A.start) { qrKod = qKod; rajzol(); }
+    }
+    try { history.replaceState(null, "", location.pathname + "?ugy=" + encodeURIComponent(qUgy)); } catch (e) {}
+    setInterval(ketyeg, 1000); return;
+  }
   const aktiv = tarolo.get("nyi:aktiv", null);
   if (aktiv && LISTA.some(x => x.id === aktiv)) await ugyBetolt(aktiv);
   else rajzol();
@@ -810,7 +825,8 @@ function valaszto() {
   return `<main class="oldal"><div class="nyito"><span class="pecsetjel">NYOMOZÓIRODA</span><h1>Melyik ügyön dolgoztok?</h1><p>A játékmester megmondja, melyik ügyet válasszátok.</p></div>
   ${LISTA.length ? LISTA.map(u => `
     <button class="ugykartya" data-ugy="${esc(u.id)}"><h2>${esc(u.cim)}</h2><span>${esc(u.alcim)}</span><span class="kicsi halv">${esc(u.jatekosok)} · kb. ${Math.round(u.idotartam / 60 * 10) / 10} óra · ${u.fejtorok} fejtörő · ${u.ladak} láda</span></button>`).join("")
-    : `<div class="lap"><h2>Még nincs feltöltött ügy</h2><p>A weboldal működik, de az ügyek mappája üres, vagy most nem érhető el.</p></div>`}</main>`;
+    : `<div class="lap"><h2>Még nincs feltöltött ügy</h2><p>A weboldal működik, de nem található ügyfájl, vagy most nem érhető el.</p></div>`}
+  <p style="text-align:center;margin-top:24px"><a href="jatekmester.html" style="color:var(--bg-muted);font-size:15px">Játékmesteri konzol</a></p></main>`;
 }
 function belepes() {
   return `<main class="oldal"><button class="vissza" data-act="masikugy">${IK.vissza} Másik ügy</button>
@@ -820,8 +836,8 @@ function belepes() {
     <div><label class="cimke" for="csapatnev">A csapatotok neve</label>
     <input class="mezo" id="csapatnev" maxlength="30" value="${esc(A.csapat)}" placeholder="pl. Baker Street"></div>
     <div><label class="cimke" for="indito">Indítókód</label>
-    <input class="mezo kod" id="indito" inputmode="numeric" maxlength="4" placeholder="0000">
-    <p class="kicsi halv" style="margin-top:6px">Négy számjegy, a játékmester mondja be vagy vetíti ki. Ettől indul a közös óra.</p></div>
+    <input class="mezo kod" id="indito" inputmode="numeric" maxlength="4" placeholder="0000" value="${esc(qrKod)}">
+    <p class="kicsi halv" style="margin-top:6px">${qrKod ? "A QR-kódból már beírtuk. Csak a csapatnevet adjátok meg!" : "Négy számjegy, a játékmester mondja be vagy vetíti ki. Ettől indul a közös óra."}</p></div>
     <p id="belepoHiba" class="ertesites hiba" hidden></p>
     <button class="gomb teljes" type="submit">Indulhat a nyomozás</button>
   </form></main>`;

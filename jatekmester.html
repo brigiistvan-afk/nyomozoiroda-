@@ -644,7 +644,7 @@ const tarolo = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 };
 const $ = s => document.querySelector(s);
-let LISTA = [], P = null, G = null, J = null, ful = "vezerles", csapatDb = 6, nyomDosszie = false;
+let LISTA = [], P = null, G = null, J = null, ful = "vezerles", csapatDb = 6, nyomDosszie = false, nyomResz = "jatekos";
 const NEHEZ = { konnyu: "könnyű", kozepes: "közepes", nehez: "nehéz" };
 const jmKulcs = () => "nyi-jm:" + G.id;
 const ment = () => tarolo.set(jmKulcs(), J);
@@ -685,7 +685,7 @@ function rajzol() {
     <div class="sor"><button class="gomb" data-act="kivetito">Kivetítő</button><button class="gomb masod" data-act="kilep">Kilépés</button></div></div>
   <nav class="fulek" role="tablist">${fulek.map(([k, l]) => `<button role="tab" aria-selected="${ful === k}" data-ful="${k}">${l}</button>`).join("")}</nav>
   ${{ vezerles: vezerles, megoldasok: megoldasok, nyomtatas: nyomtatas, eredmenyek: eredmenyek }[ful]()}`;
-  if (ful === "nyomtatas") qrRajzol();
+  qrRajzol();
 }
 
 /* --- Vezérlés --- */
@@ -708,8 +708,9 @@ function vezerles() {
     </div>
     <div class="lap">
       <span class="felirat halv">Indítókód a csapatoknak</span>
-      ${J.start ? `<div class="inditokod">${inditokod(J.start)}</div><p>Vetítsd ki vagy mondd be. A csapatok a telefonjukon ezzel indítják a közös órát.</p>` : `<p>Az óra indításakor itt jelenik meg a négyjegyű kód.</p>`}
-      <p class="kicsi halv">A csapat-app címe: <b>${esc(location.origin + location.pathname.replace(/jatekmester\.html$/, ""))}</b></p>
+      ${J.start ? `<div class="sor" style="align-items:center;gap:18px"><div class="inditokod">${inditokod(J.start)}</div><div class="qrhely" style="background:#fff;padding:8px;border-radius:8px" data-qr="${esc(appCim(inditokod(J.start)))}" data-meret="150"></div></div>
+        <p>A legegyszerűbb: nyisd meg a <b>Kivetítőt</b>. Azon nagyban látszik ez a QR-kód: a csapatok beszkennelik, és csak a nevüket kell beírniuk, az indítókód benne van.</p>` : `<p>Az óra indításakor itt jelenik meg a négyjegyű kód és a belépő QR-kód.</p>`}
+      <p class="kicsi halv">A csapat-app címe: <b style="word-break:break-all">${esc(appCim(""))}</b></p>
     </div>
   </section>
   <section class="lap">
@@ -761,19 +762,19 @@ function megoldasok() {
 function nyomtatas() {
   const T = csapatDb, url = location.origin + location.pathname.replace(/jatekmester\.html$/, "");
   const lap = (sav, darab, tartalom, osztaly = "") => `<section class="nyomlap ${osztaly}"><div class="fejsav"><b>${esc(sav)}</b><span>${esc(darab)}</span></div>${tartalom}</section>`;
-  const lapok = [];
-  // 1. Játékmesteri lap
-  lapok.push(lap("Játékmesteri lap — titkos", "1 példány", `<h2>${esc(G.cim)}</h2><p>${esc(G.alcim)} · ${esc(G.jatekosok)} · ${ido(G.idotartam)} óra · ${T} csapat</p>
+  const lapok = [], titkos = [];
+  // 1. Játékmesteri lap (TITKOS)
+  titkos.push(lap("Játékmesteri lap — titkos", "1 példány", `<h2>${esc(G.cim)}</h2><p>${esc(G.alcim)} · ${esc(G.jatekosok)} · ${ido(G.idotartam)} óra · ${T} csapat</p>
     <h3>Megoldás</h3><p><b>Tettes:</b> ${esc(G.megoldas.tettes)} · <b>Időpont:</b> ${esc(G.megoldas.valodiIdo)} · <b>Fegyver:</b> ${esc(G.megoldas.fegyver)}</p><p><b>Indíték:</b> ${esc(G.megoldas.inditek)}</p>
     <h3>Logikai lánc</h3><ol>${G.megoldas.lanc.map(x => `<li>${esc(x)}</li>`).join("")}</ol>
     <h3>Forgatókönyv</h3><table>${esemenyek().map(x => `<tr><td><b>${ido(x.perc)}</b></td><td><b>${esc(x.cim)}</b> — ${esc(x.teendo)}</td></tr>`).join("")}</table>
     <h3>Fejtörők megfejtései</h3><table>${G.fejtorok.map(f => `<tr><td>${esc(f.id)}</td><td>${esc(f.cim)}</td><td class="kod">${f.kartyak.map(c => esc(c.valasz)).join(" | ")}</td></tr>`).join("")}</table>`));
-  // 2. Láda-beállító
-  lapok.push(lap("Láda-beállító lap — titkos", "1 példány", `<h2>Ládák előkészítése</h2>
+  // 2. Láda-beállító (TITKOS)
+  titkos.push(lap("Láda-beállító lap — titkos", "1 példány", `<h2>Ládák előkészítése</h2>
     <p>Minden ládába tegyél <b>${T} borítékot</b> (csapatonként egyet). A borítékokra írd rá a láda nevét. A lakatot állítsd a kódra, zárd be, és keverd össze a számokat.</p>
     <table><tr><th>Láda</th><th>Kód</th><th>Hová</th><th>Nyílik</th><th>Borítékba</th></tr>${G.ladak.map(l => `<tr><td><b>${esc(l.nev)}</b></td><td class="kod" style="font-size:22px">${esc(l.kod)}</td><td>${esc(l.hely)}</td><td>${ido(l.nyilik)}</td><td>${l.iratok.map(d => esc(d.cim)).join("<br>")}</td></tr>`).join("")}</table>`));
   // 3. Belépő plakát QR-kóddal
-  lapok.push(lap("Plakát a csapatoknak", "1–2 példány", `<div class="cimkelap" style="border:0;min-height:auto"><h2>${esc(G.cim)}</h2><p style="font-size:22px">Nyissátok meg a telefonon, csapatonként egyet:</p><div class="qrhely" id="qrPlakat"></div><p class="kod" style="font-size:20px;letter-spacing:.05em">${esc(url)}</p><p style="font-size:20px">Az indítókódot a játékmester mondja be.</p></div>`));
+  lapok.push(lap("Plakát a csapatoknak", "1–2 példány", `<div class="cimkelap" style="border:0;min-height:auto"><h2>${esc(G.cim)}</h2><p style="font-size:22px">Nyissátok meg a telefonon, csapatonként egyet:</p><div class="qrhely" data-qr="${esc(appCim(""))}" data-meret="260"></div><p class="kod" style="font-size:16px;letter-spacing:.02em;word-break:break-all">${esc(appCim(""))}</p><p style="font-size:20px">Az indítókódot a játékmester mondja be, vagy a kivetítőn lévő QR-kódban van.</p></div>`));
   // 4. Láda-címkék
   G.ladak.forEach((l, i) => lapok.push(lap("Címke a ládára", "1 példány", `<div class="cimkelap"><div class="nagyszam">${i + 1}.</div><h2>${esc(l.nev)}</h2><p style="font-size:24px">Időzár: a játék <b>${l.nyilik}. percétől</b> nyitható.</p><p style="font-size:20px">Csak a saját csapatotok borítékát vegyétek ki!<br>Zárjátok vissza, és keverjétek össze a számokat.</p></div>`)));
   // 5. Borítékok tartalma
@@ -782,21 +783,33 @@ function nyomtatas() {
   if (nyomDosszie) for (let k = 1; k <= T; k++) lapok.push(lap("Dosszié", `${k}/${T}. példány`, `<h2>${esc(G.cim)}</h2><p style="white-space:pre-wrap">${esc(G.bevezeto)}</p><p><b>A megbízás:</b> ${esc(G.megbizas)}</p>
     <table><tr><th>Gyanúsított</th><th>Kapcsolat</th><th>Leírás</th></tr>${G.gyanusitottak.map(g => `<tr><td><b>${esc(g.nev)}</b></td><td>${esc(g.kapcsolat)}</td><td>${esc(g.leiras)}</td></tr>`).join("")}</table>
     <div class="iratok">${G.dosszie.map(d => irat(d)).join("")}</div>`));
-  const oldalszam = 3 + G.ladak.length + G.ladak.length * T + (nyomDosszie ? T : 0);
+  const jatekos = nyomResz === "jatekos";
+  const mutat = jatekos ? lapok : titkos;
   return `<div id="nyomtatasHely" class="oszlop">
     <div class="lap vezerlo"><span class="felirat halv">Nyomtatható csomag</span>
-      <div class="sor"><label class="cimke" for="csapatDb" style="margin:0">Csapatok száma</label><input class="mezo" id="csapatDb" type="number" min="1" max="12" value="${T}" style="width:110px">
+      <div class="sor" role="group" aria-label="Mit nyomtatsz?">
+        <button class="gomb ${jatekos ? "" : "masod"}" data-nyomresz="jatekos">Játékos anyagok</button>
+        <button class="gomb ${jatekos ? "masod" : ""}" data-nyomresz="jm">Játékmesteri lapok (titkos)</button></div>
+      ${jatekos ? `<p class="ertesites ok"><b>Megoldás nélkül.</b> Borítékok tartalma, ládacímkék és QR-plakát — ezek kerülnek a játékosokhoz.</p>
+        <div class="sor"><label class="cimke" for="csapatDb" style="margin:0">Csapatok száma</label><input class="mezo" id="csapatDb" type="number" min="1" max="12" value="${T}" style="width:110px">
         <label class="sor" style="gap:8px"><input type="checkbox" id="nyomDosszie" ${nyomDosszie ? "checked" : ""} style="width:22px;height:22px"> a dosszié papíron is</label></div>
-      <p>Kb. ${oldalszam} oldal. A borítéktartalmak csapatonként külön oldalon vannak, egyszerűen csak ki kell nyomtatni és borítékba tenni. A fényképeket érdemes színes nyomtatóval, vastagabb papírra.</p>
+        <p>${mutat.length} oldal. A borítéktartalmak csapatonként külön oldalon vannak: ki kell nyomtatni, és borítékba tenni. A fényképeket érdemes színesben, vastagabb papírra.</p>`
+      : `<p class="ertesites hiba"><b>Titkos!</b> Ezeken a megoldás, a ládakódok és a forgatókönyv van. Csak neked szól, ne kerüljön a játékosok közé.</p><p>${mutat.length} oldal.</p>`}
       <div class="sor"><button class="gomb" data-act="nyomtat">Nyomtatás</button><span class="kicsi halv">A nyomtatási ablakban „Mentés PDF-be” is választható.</span></div>
     </div>
-    ${lapok.join("")}
+    ${mutat.join("")}
   </div>`;
 }
-function qrRajzol() {
-  const hely = $("#qrPlakat"); if (!hely || !window.QRCode) return;
-  hely.innerHTML = "";
-  try { new QRCode(hely, { text: location.origin + location.pathname.replace(/jatekmester\.html$/, ""), width: 260, height: 260, colorDark: "#111111", colorLight: "#ffffff" }); } catch (e) {}
+const appCim = kod => location.origin + location.pathname.replace(/jatekmester\.html$/, "") + "?ugy=" + encodeURIComponent(G.id) + (kod ? "&kod=" + kod : "");
+/** Minden üres [data-qr] helyre QR-kódot rajzol */
+function qrRajzol(gyoker = document) {
+  if (!window.QRCode) return;
+  gyoker.querySelectorAll("[data-qr]").forEach(hely => {
+    if (hely.dataset.kesz === hely.dataset.qr) return;
+    hely.innerHTML = ""; hely.dataset.kesz = hely.dataset.qr;
+    const m = +hely.dataset.meret || 220;
+    try { new QRCode(hely, { text: hely.dataset.qr, width: m, height: m, colorDark: "#111111", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M }); } catch (e) {}
+  });
 }
 
 /* --- Eredmények --- */
@@ -835,10 +848,11 @@ function kivetitoRajzol() {
     ${J.bejelentes ? `<p class="k-bejel">${esc(J.bejelentes)}</p>` : ""}
     <div><div class="k-cimke">Hátralévő idő</div><div class="nagyora" data-khatra>${J.start ? hatra(G.idotartam) : ido(G.idotartam) + ":00"}</div></div>
     <div class="k-racs">
-      ${J.start && m < 25 ? `<div><div class="k-cimke">Indítókód</div><div class="k-kod">${inditokod(J.start)}</div></div>` : ""}
+      ${J.start && m < 25 ? `<div><div class="k-cimke">Csatlakozás — szkenneljétek be</div><div class="sor" style="gap:24px;align-items:center;margin-top:8px"><div style="background:#fff;padding:12px;border-radius:10px" data-qr="${esc(appCim(inditokod(J.start)))}" data-meret="260"></div><div><div class="k-cimke">vagy indítókód</div><div class="k-kod">${inditokod(J.start)}</div></div></div></div>` : ""}
       ${kov ? `<div><div class="k-cimke">Következő láda</div><div class="k-nagy">${esc(kov.nev)}</div><div class="nagyora" style="font-size:clamp(48px,6vw,96px);color:var(--bg-ink)" data-kkov="${kov.nyilik}">${hatra(kov.nyilik)}</div></div>` : ""}
     </div>
     ${r.length ? `<div><div class="k-cimke">Állás</div><table><tbody>${r.map((e, i) => `<tr><td style="color:var(--hl);font-family:var(--f-type)">${i + 1}.</td><td>${esc(e.csapat)}</td><td style="text-align:right;font-family:var(--f-type)"><b>${e.ossz}</b></td></tr>`).join("")}</tbody></table></div>` : ""}`;
+  qrRajzol(k);
 }
 
 /* ---------------- Események ---------------- */
@@ -874,6 +888,7 @@ document.addEventListener("click", e => {
   const t = e.target.closest("button"); if (!t) return;
   const d = t.dataset;
   if (d.ful) { ful = d.ful; rajzol(); return; }
+  if (d.nyomresz) { nyomResz = d.nyomresz; rajzol(); return; }
   if (d.torol) { J.eredmenyek = J.eredmenyek.filter(x => x.kod !== d.torol); ment(); rajzol(); kivetitoRajzol(); return; }
   switch (d.act) {
     case "indit": J.start = Date.now(); J.start -= J.start % 60000; ment(); rajzol(); return;   // egész percre kerekítve, hogy az indítókód pontos legyen
