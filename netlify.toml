@@ -1,0 +1,13 @@
+# Ha Netlify-on futtatod (GitHub Pages helyett): a feltöltés után ez a build fut le.
+# Privát repóban a forras/ mappába tett olvasható ügyekhez állítsd be: Site configuration → Environment variables → JATEKMESTER_JELSZO
+[build]
+  command = "node eszkozok/build.mjs"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[headers]]
+  for = "/ugyek/*"
+  [headers.values]
+    Cache-Control = "no-cache"

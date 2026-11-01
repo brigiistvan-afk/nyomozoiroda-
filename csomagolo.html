@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Csomagoló · Nyomozóiroda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="motor/stilus.css">
+<style>
+body{font-size:17px}
+.keret{max-width:760px;margin:0 auto;padding:24px max(16px,env(safe-area-inset-right)) 60px max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:18px}
+.keret h1{font-size:clamp(30px,6vw,42px)}
+.mezo{font-size:17px;min-height:50px}
+textarea.mezo{min-height:160px;font-family:var(--f-type);font-size:14px}
+ol.lepes{margin:0;padding-left:22px;display:grid;gap:6px}
+ul.lista{margin:0;padding-left:20px;display:grid;gap:4px}
+</style>
+</head>
+<body>
+<main class="keret">
+  <div><span class="felirat" style="color:var(--bg-muted)">Nyomozóiroda · fejlesztői eszköz</span><h1>Csomagoló</h1>
+    <p style="color:var(--bg-muted)">Egy olvasható ügyfájlból feltölthető, titkosított fájlt készít. A megoldások csak a játékmesteri jelszóval lesznek olvashatók, így a fájl nyilvános GitHub-repóba is mehet.</p></div>
+
+  <form class="lap" id="urlap" autocomplete="off">
+    <h2>1. Az ügyfájl</h2>
+    <label class="cimke" for="fajl">Válaszd ki a .json fájlt</label>
+    <input class="mezo" id="fajl" type="file" accept=".json,application/json">
+    <details><summary class="kicsi" style="cursor:pointer">…vagy illeszd be a szövegét</summary>
+      <textarea class="mezo" id="szoveg" placeholder='{ "id": "…", "cim": "…", … }' style="margin-top:8px"></textarea></details>
+
+    <h2 style="margin-top:10px">2. Játékmesteri jelszó</h2>
+    <p class="kicsi halv">Ezzel nyitod majd meg az ügyet a játékmesteri konzolban. Ha elfelejted, a fájlt újra kell csomagolni.</p>
+    <label class="cimke" for="j1">Jelszó</label><input class="mezo" id="j1" type="password" autocomplete="new-password">
+    <label class="cimke" for="j2">Jelszó még egyszer</label><input class="mezo" id="j2" type="password" autocomplete="new-password">
+
+    <button class="gomb" type="submit" style="margin-top:8px">Ellenőrzés és csomagolás</button>
+  </form>
+
+  <section class="lap" id="eredmeny" hidden></section>
+
+  <section class="lap">
+    <h2>Utána: feltöltés a GitHubra</h2>
+    <ol class="lepes">
+      <li>Nyisd meg a repót a GitHubon, és lépj be az <b>ugyek</b> mappába.</li>
+      <li><b>Add file → Upload files</b>, húzd rá a letöltött fájlt, majd <b>Commit changes</b>.</li>
+      <li>Pár perc múlva az új ügy megjelenik a csapat-appban. (Az <b>Actions</b> fülön látod, hogy kész-e.)</li>
+    </ol>
+    <p class="kicsi halv">Ugyanilyen nevű fájl feltöltése felülírja a régit, így egy ügy javítása is így megy.</p>
+  </section>
+</main>
+
+<script type="module">
+import { ellenoriz, csomagol } from "./motor/csomag.mjs";
+import { temaBeallit } from "./motor/betuk.mjs";
+import { esc } from "./motor/iratok.mjs";
+temaBeallit("noir1920");
+const $ = s => document.querySelector(s);
+let utolsoUrl = null;
+
+$("#urlap").addEventListener("submit", async e => {
+  e.preventDefault();
+  const ki = $("#eredmeny"); ki.hidden = false;
+  const hiba = (cim, sorok = []) => { ki.innerHTML = `<h2>${esc(cim)}</h2>${sorok.length ? `<ul class="lista">${sorok.map(s => `<li>${esc(s)}</li>`).join("")}</ul>` : ""}`; ki.scrollIntoView({ behavior: "smooth", block: "start" }); };
+  let szoveg = $("#szoveg").value.trim();
+  const f = $("#fajl").files[0];
+  if (f) szoveg = await f.text();
+  if (!szoveg) return hiba("Nincs megadva ügyfájl.", ["Válassz ki egy .json fájlt, vagy illeszd be a szövegét."]);
+  let u;
+  try { u = JSON.parse(szoveg); } catch (er) { return hiba("A fájl nem érvényes JSON.", [er.message]); }
+  if (u.formatum === 1 && u.jm) return hiba("Ez a fájl már be van csomagolva.", ["Ezt közvetlenül feltöltheted a GitHubra az ugyek mappába."]);
+  const j1 = $("#j1").value, j2 = $("#j2").value;
+  if (j1.length < 4) return hiba("Adj meg legalább 4 karakteres jelszót.");
+  if (j1 !== j2) return hiba("A két jelszó nem egyezik.");
+  const { hibak, figy } = ellenoriz(u);
+  if (hibak.length) return hiba(`${hibak.length} hiba miatt nem csomagolható:`, hibak);
+  ki.innerHTML = `<p>Csomagolás… (néhány másodperc)</p>`;
+  const pub = await csomagol(u, j1);
+  const blob = new Blob([JSON.stringify(pub)], { type: "application/json" });
+  if (utolsoUrl) URL.revokeObjectURL(utolsoUrl);
+  utolsoUrl = URL.createObjectURL(blob);
+  const nev = u.id + ".json";
+  ki.innerHTML = `<span class="felirat halv">Kész</span><h2>${esc(u.cim)}</h2>
+    <p>${u.fejtorok.length} fejtörő · ${(u.ladak || []).length} láda · ${u.dosszie.length} dossziéirat</p>
+    ${figy.length ? `<div class="ertesites"><b>Figyelmeztetések</b> (nem akadályozzák a játékot):<ul class="lista">${figy.map(s => `<li>${esc(s)}</li>`).join("")}</ul></div>` : ""}
+    <a class="gomb" href="${utolsoUrl}" download="${esc(nev)}">${esc(nev)} letöltése</a>
+    <p class="kicsi halv">Ezt a fájlt töltsd fel a repó <b>ugyek</b> mappájába.</p>`;
+  ki.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+</script>
+</body>
+</html>

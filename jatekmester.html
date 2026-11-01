@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Játékmester · Nyomozóiroda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="motor/stilus.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+body{font-size:17px}
+.keret{max-width:1080px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-right)) 60px max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:18px}
+.fej{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:flex-end;justify-content:space-between}
+.fej h1{font-size:clamp(28px,5vw,40px)}
+.fulek{display:flex;gap:4px;overflow-x:auto;border-bottom:2px solid var(--bg-ink);scrollbar-width:none}
+.fulek button{border:1px solid var(--bg-line);border-bottom:0;border-radius:8px 8px 0 0;background:var(--bg-2);color:var(--bg-muted);padding:11px 16px;font-weight:700;white-space:nowrap}
+.fulek button[aria-selected="true"]{background:var(--bg-ink);color:var(--bg);border-color:var(--bg-ink)}
+.lap{font-size:17px}
+.nagyora{font-family:var(--f-type);font-weight:700;font-size:clamp(48px,9vw,80px);font-variant-numeric:tabular-nums;line-height:1}
+.inditokod{font-family:var(--f-type);font-weight:700;font-size:clamp(40px,8vw,64px);letter-spacing:.2em;color:var(--stamp)}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;vertical-align:top;padding:9px 8px;border-bottom:1px solid var(--line)}
+th{font-family:var(--f-type);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:400}
+td.sz,th.sz{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tablaburok{overflow-x:auto}
+.most{background:var(--hl)}
+.mult{opacity:.5}
+.kod{font-family:var(--f-type);font-weight:700;letter-spacing:.2em;color:var(--stamp)}
+.mezo{font-size:18px;min-height:50px}
+.gomb{font-size:17px;min-height:50px}
+details summary{cursor:pointer;font-weight:700}
+pre.szoveg{white-space:pre-wrap;font-family:var(--f-type);font-size:15px;margin:0;background:var(--paper-2);padding:12px;border-radius:8px}
+/* Kivetítő */
+#kivetito{position:fixed;inset:0;z-index:80;background:var(--bg);color:var(--bg-ink);overflow:auto;padding:max(28px,env(safe-area-inset-top)) max(32px,env(safe-area-inset-right)) 28px max(32px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:32px}
+#kivetito h1{font-size:clamp(36px,6vw,80px)}
+#kivetito .nagyora{font-size:clamp(80px,13vw,190px);color:var(--hl);white-space:nowrap}
+#kivetito .k-racs{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:32px}
+#kivetito .k-cimke{font-family:var(--f-type);letter-spacing:.16em;text-transform:uppercase;color:var(--bg-muted);font-size:clamp(14px,1.4vw,20px)}
+#kivetito .k-nagy{font-size:clamp(26px,3.2vw,46px);line-height:1.25}
+#kivetito .k-kod{font-family:var(--f-type);font-weight:700;font-size:clamp(60px,10vw,140px);letter-spacing:.2em;color:var(--hl);line-height:1}
+#kivetito .k-bejel{font-family:var(--f-display);font-style:italic;font-size:clamp(28px,4vw,60px);border-left:6px solid var(--stamp);padding-left:24px}
+#kivetito table td{font-size:clamp(20px,2.4vw,34px);border-color:var(--bg-line);color:var(--bg-ink)}
+#kivetito .bezar{position:fixed;top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));opacity:.4}
+#kivetito .bezar:hover{opacity:1}
+
+/* ---------- NYOMTATÁS ---------- */
+.nyomlap{background:#fff;color:#111;padding:28px;border:1px solid #ccc;display:flex;flex-direction:column;gap:14px}
+.nyomlap h2{font-family:var(--f-display);font-size:30px;color:#111}
+.nyomlap h3{font-size:20px;margin-top:6px}
+.nyomlap .fejsav{display:flex;justify-content:space-between;gap:12px;font-family:var(--f-type);font-size:12px;letter-spacing:.12em;text-transform:uppercase;border-bottom:2px solid #111;padding-bottom:6px}
+.nyomlap .fejsav b{color:#a3312a}
+.nyomlap .iratok{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.nyomlap .iratok .irat{box-shadow:none}
+.nyomlap .iratok .i-fenykep,.nyomlap .iratok .i-helyszinrajz{grid-column:span 1}
+.cimkelap{align-items:center;justify-content:center;text-align:center;min-height:60vh;gap:22px;border:6px double #111}
+.cimkelap .nagyszam{font-family:var(--f-type);font-weight:700;font-size:90px;line-height:1}
+.cimkelap h2{font-size:52px}
+.qrhely{display:flex;justify-content:center}
+.qrhely img,.qrhely canvas{width:260px;height:260px}
+@media print{
+  @page{margin:12mm}
+  body{background:#fff!important}
+  .keret>*:not(#nyomtatasHely), #nyomtatasHely>.vezerlo{display:none!important}
+  .keret{padding:0;max-width:none}
+  #nyomtatasHely{display:block!important}
+  .nyomlap{border:0;padding:0;break-after:page;page-break-after:always}
+  .nyomlap:last-child{break-after:auto}
+  .irat{box-shadow:none!important}
+}
+</style>
+</head>
+<body>
+<div class="keret" id="app"></div>
+<div id="kivetito" hidden></div>
+
+<script type="module">
+import { visszafejt, ITER_JM, eredmenyKodOlvas, inditokod, ido } from "./motor/kozos.mjs";
+import { irat, esc } from "./motor/iratok.mjs";
+import { temaBeallit } from "./motor/betuk.mjs";
+
+const tarolo = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+const $ = s => document.querySelector(s);
+let LISTA = [], P = null, G = null, J = null, ful = "vezerles", csapatDb = 6, nyomDosszie = false;
+const NEHEZ = { konnyu: "könnyű", kozepes: "közepes", nehez: "nehéz" };
+const jmKulcs = () => "nyi-jm:" + G.id;
+const ment = () => tarolo.set(jmKulcs(), J);
+const perc = () => J?.start ? (Date.now() - J.start) / 60000 : 0;
+const hms = s => { const h = Math.floor(s / 3600), mm = Math.floor(s % 3600 / 60), ss = s % 60; return (h ? h + ":" + String(mm).padStart(2, "0") : mm) + ":" + String(ss).padStart(2, "0"); };
+const hatra = m => hms(Math.max(0, Math.ceil((m - perc()) * 60)));
+
+async function indul() {
+  temaBeallit("noir1920");
+  try { LISTA = (await (await fetch("ugyek/lista.json", { cache: "no-cache" })).json()).ugyek || []; } catch (e) { LISTA = []; }
+  rajzol();
+  setInterval(ketyeg, 1000);
+}
+
+/* ---------------- Belépés ---------------- */
+function belepoNezet() {
+  return `<div class="fej"><div><span class="felirat" style="color:var(--bg-muted)">Nyomozóiroda</span><h1>Játékmesteri konzol</h1></div><div class="sor"><a class="gomb masod" href="csomagolo.html">Csomagoló</a><a class="gomb masod" href="./">Csapat-app ›</a></div></div>
+  <form class="lap" id="belep" style="max-width:560px" autocomplete="off">
+    <h2>Belépés</h2>
+    <label class="cimke" for="ugy">Ügy</label>
+    <select class="mezo" id="ugy">${LISTA.map(u => `<option value="${esc(u.id)}">${esc(u.cim)} — ${esc(u.alcim)}</option>`).join("")}</select>
+    <label class="cimke" for="jelszo">Játékmesteri jelszó</label>
+    <input class="mezo" id="jelszo" type="password" autocomplete="current-password">
+    <p class="kicsi halv">Azt a jelszót add meg, amellyel az ügyet a Csomagolóban becsomagoltad. A megoldások csak ezzel nyithatók meg.</p>
+    <p class="ertesites hiba" id="belepHiba" hidden></p>
+    <button class="gomb" type="submit" ${LISTA.length ? "" : "disabled"}>Megnyitás</button>
+    ${LISTA.length ? "" : `<p class="ertesites hiba">Nincs feltöltött ügy.</p>`}
+  </form>`;
+}
+
+/* ---------------- Fő nézet ---------------- */
+function rajzol() {
+  const app = $("#app");
+  if (!G) { app.innerHTML = belepoNezet(); return; }
+  const fulek = [["vezerles", "Vezérlés"], ["megoldasok", "Megoldások"], ["nyomtatas", "Nyomtatás"], ["eredmenyek", "Eredmények"]];
+  app.innerHTML = `
+  <div class="fej"><div><span class="felirat" style="color:var(--bg-muted)">Játékmester · ${esc(G.jatekosok || "")}</span><h1>${esc(G.cim)}</h1><p style="color:var(--bg-muted)">${esc(G.alcim)}</p></div>
+    <div class="sor"><button class="gomb" data-act="kivetito">Kivetítő</button><button class="gomb masod" data-act="kilep">Kilépés</button></div></div>
+  <nav class="fulek" role="tablist">${fulek.map(([k, l]) => `<button role="tab" aria-selected="${ful === k}" data-ful="${k}">${l}</button>`).join("")}</nav>
+  ${{ vezerles: vezerles, megoldasok: megoldasok, nyomtatas: nyomtatas, eredmenyek: eredmenyek }[ful]()}`;
+  if (ful === "nyomtatas") qrRajzol();
+}
+
+/* --- Vezérlés --- */
+function esemenyek() {
+  const e = [];
+  (G.forgatokonyv || []).forEach(f => e.push({ perc: f.perc, cim: f.cim, teendo: f.teendo }));
+  G.ladak.forEach(l => { if (!(G.forgatokonyv || []).some(f => f.perc === l.nyilik)) e.push({ perc: l.nyilik, cim: `${l.nev} nyílik`, teendo: `Kód: ${l.kod}` }); });
+  return e.sort((a, b) => a.perc - b.perc);
+}
+function vezerles() {
+  const m = perc(), ev = esemenyek();
+  let akt = -1; ev.forEach((x, i) => { if (J.start && m >= x.perc) akt = i; });
+  return `
+  <section class="racs" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
+    <div class="lap">
+      <span class="felirat halv">Óra</span>
+      <div class="nagyora" data-ora>${J.start ? ido(m) : "0:00"}</div>
+      <p class="halv">${J.start ? `Indítva ${new Date(J.start).toLocaleTimeString("hu-HU", { hour: "2-digit", minute: "2-digit" })}-kor · hátravan <b data-hatra>${hatra(G.idotartam)}</b>` : `Tervezett hossz: ${ido(G.idotartam)} óra`}</p>
+      ${J.start ? `<button class="gomb masod veszely" data-act="nullaz" style="background:transparent;color:var(--stamp)">Óra nullázása</button>` : `<button class="gomb" data-act="indit">Óra indítása most</button>`}
+    </div>
+    <div class="lap">
+      <span class="felirat halv">Indítókód a csapatoknak</span>
+      ${J.start ? `<div class="inditokod">${inditokod(J.start)}</div><p>Vetítsd ki vagy mondd be. A csapatok a telefonjukon ezzel indítják a közös órát.</p>` : `<p>Az óra indításakor itt jelenik meg a négyjegyű kód.</p>`}
+      <p class="kicsi halv">A csapat-app címe: <b>${esc(location.origin + location.pathname.replace(/jatekmester\.html$/, ""))}</b></p>
+    </div>
+  </section>
+  <section class="lap">
+    <span class="felirat halv">Bejelentés a kivetítőre</span>
+    <form class="sor" id="bejelentes"><input class="mezo" id="bejelSzoveg" style="flex:1;min-width:0" placeholder="pl. Füstszag a konyhából!" value="${esc(J.bejelentes || "")}"><button class="gomb" type="submit">Kiírás</button>${J.bejelentes ? `<button class="gomb masod" type="button" data-act="bejeltorol">Törlés</button>` : ""}</form>
+  </section>
+  <section class="lap">
+    <span class="felirat halv">Forgatókönyv</span>
+    <div class="tablaburok"><table><tbody>${ev.map((x, i) => `<tr class="${i === akt ? "most" : i < akt ? "mult" : ""}"><td class="sz"><b>${ido(x.perc)}</b></td><td><b>${esc(x.cim)}</b><br>${esc(x.teendo)}</td></tr>`).join("")}</tbody></table></div>
+  </section>
+  <section class="lap">
+    <span class="felirat halv">Ládák</span>
+    <div class="tablaburok"><table><thead><tr><th>Láda</th><th>Kód</th><th>Hely</th><th class="sz">Nyílik</th></tr></thead><tbody>
+    ${G.ladak.map(l => `<tr><td><b>${esc(l.nev)}</b></td><td class="kod">${esc(l.kod)}</td><td>${esc(l.hely)}</td><td class="sz">${ido(l.nyilik)}${J.start && perc() < l.nyilik ? ` <span class="halv">(${hatra(l.nyilik)})</span>` : ""}</td></tr>`).join("")}</tbody></table></div>
+  </section>`;
+}
+
+/* --- Megoldások --- */
+function megoldasok() {
+  const s = G.megoldas;
+  return `
+  <section class="lap"><span class="felirat halv">A megoldás</span>
+    <dl style="display:grid;grid-template-columns:140px 1fr;gap:8px 14px;margin:0">
+      <dt class="halv">Tettes</dt><dd style="margin:0"><b>${esc(s.tettes)}</b></dd>
+      <dt class="halv">Indíték</dt><dd style="margin:0">${esc(s.inditek)}</dd>
+      <dt class="halv">Fegyver</dt><dd style="margin:0">${esc(s.fegyver)}</dd>
+      <dt class="halv">Időpont</dt><dd style="margin:0">${esc(s.valodiIdo)}${s.hamisIdo ? ` (hamis: ${esc(s.hamisIdo)})` : ""}</dd>
+      <dt class="halv">Módszer</dt><dd style="margin:0">${esc(s.modszer)}</dd></dl>
+    <h3>Logikai lánc — felolvasáshoz</h3><ol style="margin:0;padding-left:22px;display:grid;gap:6px">${s.lanc.map(x => `<li>${esc(x)}</li>`).join("")}</ol>
+    <h3>A tettes vallomása</h3><p style="font-family:var(--f-display);font-style:italic;font-size:20px">${esc(s.vallomas)}</p>
+  </section>
+  <section class="lap"><span class="felirat halv">Gyanúsítottak — a valóság</span>
+    <div class="tablaburok"><table><thead><tr><th>Név</th><th>Indíték</th><th>Hol volt valójában</th></tr></thead><tbody>
+    ${G.gyanusitottak.map(g => `<tr><td><b>${esc(g.nev)}</b></td><td>${esc(g.inditek || "")}</td><td>${esc(g.valojaban || "")}</td></tr>`).join("")}</tbody></table></div></section>
+  <section class="lap"><span class="felirat halv">Fejtörők</span>
+    ${G.fejtorok.map(f => `<details><summary>${esc(f.id)} · ${esc(f.cim)} — <span class="kod">${f.kartyak.map(c => esc(c.valasz)).join(" | ")}</span> <span class="halv">(${NEHEZ[f.nehezseg]}, nyílik ${ido(f.nyilik || 0)})</span></summary>
+      <div class="oszlop" style="margin:10px 0 16px">${f.kartyak.map((c, i) => `<pre class="szoveg">${esc(c.szoveg)}\n\n→ ${esc(c.valasz)}</pre>`).join("")}
+      <p><b>Megoldás:</b> ${esc(f.magyarazat)}</p><p><b>Súgók:</b> ${(f.sugok || []).map((h, i) => `${i + 1}. ${esc(h)}`).join(" · ")}</p>
+      <p><b>Jutalom:</b> ${(f.jutalom || []).map(d => esc(d.cim)).join(", ")}</p></div></details>`).join("")}
+  </section>
+  <section class="lap"><span class="felirat halv">Ládarejtvények</span>
+    ${G.ladak.map(l => `<details><summary>${esc(l.nev)} — <span class="kod">${esc(l.kod)}</span></summary>
+      <div class="oszlop" style="margin:10px 0 16px"><pre class="szoveg">${esc(l.rejtveny.szoveg)}</pre><p><b>Megoldás:</b> ${esc(l.rejtveny.magyarazat)}</p>
+      <p><b>Súgók:</b> ${(l.rejtveny.sugok || []).map((h, i) => `${i + 1}. ${esc(h)}`).join(" · ")}</p></div></details>`).join("")}
+  </section>`;
+}
+
+/* --- Nyomtatás --- */
+function nyomtatas() {
+  const T = csapatDb, url = location.origin + location.pathname.replace(/jatekmester\.html$/, "");
+  const lap = (sav, darab, tartalom, osztaly = "") => `<section class="nyomlap ${osztaly}"><div class="fejsav"><b>${esc(sav)}</b><span>${esc(darab)}</span></div>${tartalom}</section>`;
+  const lapok = [];
+  // 1. Játékmesteri lap
+  lapok.push(lap("Játékmesteri lap — titkos", "1 példány", `<h2>${esc(G.cim)}</h2><p>${esc(G.alcim)} · ${esc(G.jatekosok)} · ${ido(G.idotartam)} óra · ${T} csapat</p>
+    <h3>Megoldás</h3><p><b>Tettes:</b> ${esc(G.megoldas.tettes)} · <b>Időpont:</b> ${esc(G.megoldas.valodiIdo)} · <b>Fegyver:</b> ${esc(G.megoldas.fegyver)}</p><p><b>Indíték:</b> ${esc(G.megoldas.inditek)}</p>
+    <h3>Logikai lánc</h3><ol>${G.megoldas.lanc.map(x => `<li>${esc(x)}</li>`).join("")}</ol>
+    <h3>Forgatókönyv</h3><table>${esemenyek().map(x => `<tr><td><b>${ido(x.perc)}</b></td><td><b>${esc(x.cim)}</b> — ${esc(x.teendo)}</td></tr>`).join("")}</table>
+    <h3>Fejtörők megfejtései</h3><table>${G.fejtorok.map(f => `<tr><td>${esc(f.id)}</td><td>${esc(f.cim)}</td><td class="kod">${f.kartyak.map(c => esc(c.valasz)).join(" | ")}</td></tr>`).join("")}</table>`));
+  // 2. Láda-beállító
+  lapok.push(lap("Láda-beállító lap — titkos", "1 példány", `<h2>Ládák előkészítése</h2>
+    <p>Minden ládába tegyél <b>${T} borítékot</b> (csapatonként egyet). A borítékokra írd rá a láda nevét. A lakatot állítsd a kódra, zárd be, és keverd össze a számokat.</p>
+    <table><tr><th>Láda</th><th>Kód</th><th>Hová</th><th>Nyílik</th><th>Borítékba</th></tr>${G.ladak.map(l => `<tr><td><b>${esc(l.nev)}</b></td><td class="kod" style="font-size:22px">${esc(l.kod)}</td><td>${esc(l.hely)}</td><td>${ido(l.nyilik)}</td><td>${l.iratok.map(d => esc(d.cim)).join("<br>")}</td></tr>`).join("")}</table>`));
+  // 3. Belépő plakát QR-kóddal
+  lapok.push(lap("Plakát a csapatoknak", "1–2 példány", `<div class="cimkelap" style="border:0;min-height:auto"><h2>${esc(G.cim)}</h2><p style="font-size:22px">Nyissátok meg a telefonon, csapatonként egyet:</p><div class="qrhely" id="qrPlakat"></div><p class="kod" style="font-size:20px;letter-spacing:.05em">${esc(url)}</p><p style="font-size:20px">Az indítókódot a játékmester mondja be.</p></div>`));
+  // 4. Láda-címkék
+  G.ladak.forEach((l, i) => lapok.push(lap("Címke a ládára", "1 példány", `<div class="cimkelap"><div class="nagyszam">${i + 1}.</div><h2>${esc(l.nev)}</h2><p style="font-size:24px">Időzár: a játék <b>${l.nyilik}. percétől</b> nyitható.</p><p style="font-size:20px">Csak a saját csapatotok borítékát vegyétek ki!<br>Zárjátok vissza, és keverjétek össze a számokat.</p></div>`)));
+  // 5. Borítékok tartalma
+  G.ladak.forEach(l => { for (let k = 1; k <= T; k++) lapok.push(lap(`Boríték · ${l.nev}`, `${k}/${T}. példány`, `<div class="iratok">${l.iratok.map(d => irat(d)).join("")}</div>`)); });
+  // 6. Dosszié papíron (opcionális)
+  if (nyomDosszie) for (let k = 1; k <= T; k++) lapok.push(lap("Dosszié", `${k}/${T}. példány`, `<h2>${esc(G.cim)}</h2><p style="white-space:pre-wrap">${esc(G.bevezeto)}</p><p><b>A megbízás:</b> ${esc(G.megbizas)}</p>
+    <table><tr><th>Gyanúsított</th><th>Kapcsolat</th><th>Leírás</th></tr>${G.gyanusitottak.map(g => `<tr><td><b>${esc(g.nev)}</b></td><td>${esc(g.kapcsolat)}</td><td>${esc(g.leiras)}</td></tr>`).join("")}</table>
+    <div class="iratok">${G.dosszie.map(d => irat(d)).join("")}</div>`));
+  const oldalszam = 3 + G.ladak.length + G.ladak.length * T + (nyomDosszie ? T : 0);
+  return `<div id="nyomtatasHely" class="oszlop">
+    <div class="lap vezerlo"><span class="felirat halv">Nyomtatható csomag</span>
+      <div class="sor"><label class="cimke" for="csapatDb" style="margin:0">Csapatok száma</label><input class="mezo" id="csapatDb" type="number" min="1" max="12" value="${T}" style="width:110px">
+        <label class="sor" style="gap:8px"><input type="checkbox" id="nyomDosszie" ${nyomDosszie ? "checked" : ""} style="width:22px;height:22px"> a dosszié papíron is</label></div>
+      <p>Kb. ${oldalszam} oldal. A borítéktartalmak csapatonként külön oldalon vannak, egyszerűen csak ki kell nyomtatni és borítékba tenni. A fényképeket érdemes színes nyomtatóval, vastagabb papírra.</p>
+      <div class="sor"><button class="gomb" data-act="nyomtat">Nyomtatás</button><span class="kicsi halv">A nyomtatási ablakban „Mentés PDF-be” is választható.</span></div>
+    </div>
+    ${lapok.join("")}
+  </div>`;
+}
+function qrRajzol() {
+  const hely = $("#qrPlakat"); if (!hely || !window.QRCode) return;
+  hely.innerHTML = "";
+  try { new QRCode(hely, { text: location.origin + location.pathname.replace(/jatekmester\.html$/, ""), width: 260, height: 260, colorDark: "#111111", colorLight: "#ffffff" }); } catch (e) {}
+}
+
+/* --- Eredmények --- */
+function vadPont(valasztasok) {
+  const pv = G.pontozas.vadirat || {}; let p = 0; const reszl = [];
+  G.vadirat.kerdesek.forEach((q, i) => { const jo = valasztasok[i] === q.helyes; if (jo) p += pv[q.id] || 0; reszl.push(jo); });
+  return { p, reszl };
+}
+function ranglista() {
+  return [...(J.eredmenyek || [])].map(e => { const v = vadPont(e.valasztasok); return { ...e, vad: v.p, reszl: v.reszl, ossz: e.pont + v.p }; }).sort((a, b) => b.ossz - a.ossz);
+}
+function eredmenyek() {
+  const r = ranglista();
+  return `
+  <section class="lap" style="max-width:720px"><span class="felirat halv">Eredménykód beírása</span>
+    <p>Amikor egy csapat leadja a vádiratot, a telefonjuk egy kódot mutat (pl. <span class="kod">K7M-Q2XP</span>). Írd be ide a csapatnévvel együtt.</p>
+    <form class="oszlop" id="eredmenyUrlap" autocomplete="off" style="gap:10px">
+      <div class="sor"><input class="mezo" id="eCsapat" placeholder="Csapatnév" style="flex:1;min-width:180px"><input class="mezo" id="eKod" placeholder="XXX-XXXX" style="flex:1;min-width:160px;font-family:var(--f-type);letter-spacing:.15em;text-transform:uppercase"></div>
+      <button class="gomb" type="submit">Hozzáadás</button><p class="ertesites hiba" id="eHiba" hidden></p></form>
+  </section>
+  <section class="lap"><span class="felirat halv">Ranglista</span>
+    ${r.length ? `<div class="tablaburok"><table><thead><tr><th>#</th><th>Csapat</th><th class="sz">Fejtörő + láda</th><th>Vádirat</th><th class="sz">Vádirat pont</th><th class="sz">Összesen</th><th></th></tr></thead><tbody>
+    ${r.map((e, i) => `<tr><td><b>${i + 1}.</b></td><td><b>${esc(e.csapat)}</b><br><span class="kicsi halv kod" style="letter-spacing:.1em">${esc(e.kod)}</span></td><td class="sz">${e.pont}</td>
+      <td class="kicsi">${G.vadirat.kerdesek.map((q, j) => `${e.reszl[j] ? "✓" : "✗"} ${esc(q.opciok[e.valasztasok[j]] ?? "?")}`).join("<br>")}</td><td class="sz">${e.vad}</td><td class="sz"><b style="font-size:20px">${e.ossz}</b></td>
+      <td><button class="gomb halk" data-torol="${esc(e.kod)}">Törlés</button></td></tr>`).join("")}</tbody></table></div>` : `<p class="halv">Még nincs beírt eredmény.</p>`}
+  </section>`;
+}
+
+/* --- Kivetítő --- */
+function kivetitoRajzol() {
+  const k = $("#kivetito"); if (k.hidden) return;
+  const m = perc(), r = ranglista();
+  const kov = G.ladak.find(l => J.start && m < l.nyilik);
+  k.innerHTML = `<button class="gomb masod bezar" data-act="kivetitoki">Bezárás</button>
+    <div><span class="pecsetjel" style="display:inline-block;font-family:var(--f-type);font-weight:700;letter-spacing:.2em;color:var(--stamp);border:2px solid var(--stamp);padding:4px 10px;transform:rotate(-2deg);background:var(--paper)">ÜGYIRAT</span><h1 style="margin-top:14px">${esc(G.cim)}</h1><p class="k-nagy" style="color:var(--bg-muted)">${esc(G.alcim)}</p></div>
+    ${J.bejelentes ? `<p class="k-bejel">${esc(J.bejelentes)}</p>` : ""}
+    <div><div class="k-cimke">Hátralévő idő</div><div class="nagyora" data-khatra>${J.start ? hatra(G.idotartam) : ido(G.idotartam) + ":00"}</div></div>
+    <div class="k-racs">
+      ${J.start && m < 25 ? `<div><div class="k-cimke">Indítókód</div><div class="k-kod">${inditokod(J.start)}</div></div>` : ""}
+      ${kov ? `<div><div class="k-cimke">Következő láda</div><div class="k-nagy">${esc(kov.nev)}</div><div class="nagyora" style="font-size:clamp(48px,6vw,96px);color:var(--bg-ink)" data-kkov="${kov.nyilik}">${hatra(kov.nyilik)}</div></div>` : ""}
+    </div>
+    ${r.length ? `<div><div class="k-cimke">Állás</div><table><tbody>${r.map((e, i) => `<tr><td style="color:var(--hl);font-family:var(--f-type)">${i + 1}.</td><td>${esc(e.csapat)}</td><td style="text-align:right;font-family:var(--f-type)"><b>${e.ossz}</b></td></tr>`).join("")}</tbody></table></div>` : ""}`;
+}
+
+/* ---------------- Események ---------------- */
+document.addEventListener("submit", async e => {
+  e.preventDefault();
+  if (e.target.id === "belep") {
+    const id = $("#ugy").value, jelszo = $("#jelszo").value, h = $("#belepHiba");
+    h.hidden = true;
+    const gomb = e.target.querySelector("button"); gomb.disabled = true; gomb.textContent = "Megnyitás…";
+    try { P = await (await fetch("ugyek/" + encodeURIComponent(id) + ".json", { cache: "no-cache" })).json(); }
+    catch (er) { h.hidden = false; h.textContent = "Az ügyet nem sikerült betölteni."; gomb.disabled = false; gomb.textContent = "Megnyitás"; return; }
+    const g = await visszafejt(P.jm, jelszo, P.jm.so, ITER_JM);
+    gomb.disabled = false; gomb.textContent = "Megnyitás";
+    if (!g) { h.hidden = false; h.textContent = "Hibás jelszó."; return; }
+    G = g; temaBeallit(G.tema);
+    J = { start: null, bejelentes: "", eredmenyek: [], ...tarolo.get(jmKulcs(), {}) };
+    try { sessionStorage.setItem("nyi-jm-aktiv", JSON.stringify({ id, jelszo })); } catch (er) {}
+    rajzol(); return;
+  }
+  if (e.target.id === "bejelentes") { J.bejelentes = $("#bejelSzoveg").value.trim(); ment(); rajzol(); kivetitoRajzol(); return; }
+  if (e.target.id === "eredmenyUrlap") {
+    const nev = $("#eCsapat").value.trim(), kod = $("#eKod").value.trim(), h = $("#eHiba");
+    const o = eredmenyKodOlvas(kod, G.id);
+    if (!nev) { h.hidden = false; h.textContent = "Írd be a csapat nevét."; return; }
+    if (!o) { h.hidden = false; h.textContent = "Ez a kód nem érvényes ehhez az ügyhöz. Ellenőrizd a betűket (nincs benne 0, O, 1 és I)."; return; }
+    const norm = kod.toUpperCase().replace(/[^0-9A-Z]/g, ""); const szep = norm.slice(0, 3) + "-" + norm.slice(3);
+    J.eredmenyek = (J.eredmenyek || []).filter(x => x.kod !== szep);
+    J.eredmenyek.push({ csapat: nev, kod: szep, pont: o.pont, valasztasok: o.valasztasok });
+    ment(); rajzol(); kivetitoRajzol(); return;
+  }
+});
+document.addEventListener("click", e => {
+  const t = e.target.closest("button"); if (!t) return;
+  const d = t.dataset;
+  if (d.ful) { ful = d.ful; rajzol(); return; }
+  if (d.torol) { J.eredmenyek = J.eredmenyek.filter(x => x.kod !== d.torol); ment(); rajzol(); kivetitoRajzol(); return; }
+  switch (d.act) {
+    case "indit": J.start = Date.now(); J.start -= J.start % 60000; ment(); rajzol(); return;   // egész percre kerekítve, hogy az indítókód pontos legyen
+    case "nullaz":
+      if (t.dataset.megerosit) { J.start = null; ment(); rajzol(); return; }
+      t.dataset.megerosit = "1"; t.textContent = "Biztosan? Kattints újra a nullázáshoz"; setTimeout(() => { if (t.isConnected) { delete t.dataset.megerosit; t.textContent = "Óra nullázása"; } }, 4000); return;
+    case "bejeltorol": J.bejelentes = ""; ment(); rajzol(); kivetitoRajzol(); return;
+    case "kivetito": $("#kivetito").hidden = false; kivetitoRajzol(); document.documentElement.requestFullscreen?.().catch(() => {}); return;
+    case "kivetitoki": $("#kivetito").hidden = true; if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {}); return;
+    case "nyomtat": window.print(); return;
+    case "kilep": G = null; J = null; P = null; try { sessionStorage.removeItem("nyi-jm-aktiv"); } catch (er) {} temaBeallit("noir1920"); rajzol(); return;
+  }
+});
+document.addEventListener("change", e => {
+  if (e.target.id === "csapatDb") { csapatDb = Math.max(1, Math.min(12, +e.target.value || 1)); rajzol(); }
+  if (e.target.id === "nyomDosszie") { nyomDosszie = e.target.checked; rajzol(); }
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#kivetito").hidden) $("#kivetito").hidden = true; });
+
+let utolsoKiv = "";
+function ketyeg() {
+  if (!G) return;
+  const m = perc();
+  const o = $("[data-ora]"); if (o && J.start) o.textContent = ido(m);
+  const h = $("[data-hatra]"); if (h) h.textContent = hatra(G.idotartam);
+  const kh = $("[data-khatra]"); if (kh && J.start) kh.textContent = hatra(G.idotartam);
+  const kk = $("[data-kkov]"); if (kk) kk.textContent = hatra(+kk.dataset.kkov);
+  // a kivetítőt csak akkor rajzoljuk újra, ha valami lényeges változott (láda nyílt, indítókód eltűnt)
+  const allapot = G.ladak.map(l => m >= l.nyilik).join("") + (m < 25);
+  if (allapot !== utolsoKiv) { utolsoKiv = allapot; kivetitoRajzol(); if (ful === "vezerles" && !/INPUT/.test(document.activeElement?.tagName || "")) rajzol(); }
+}
+
+// Újratöltéskor (ugyanabban a böngészőlapban) ne kelljen újra jelszót írni
+(async () => {
+  await indul();
+  try {
+    const a = JSON.parse(sessionStorage.getItem("nyi-jm-aktiv") || "null");
+    if (a && LISTA.some(u => u.id === a.id)) {
+      P = await (await fetch("ugyek/" + encodeURIComponent(a.id) + ".json", { cache: "no-cache" })).json();
+      const g = await visszafejt(P.jm, a.jelszo, P.jm.so, ITER_JM);
+      if (g) { G = g; temaBeallit(G.tema); J = { start: null, bejelentes: "", eredmenyek: [], ...tarolo.get(jmKulcs(), {}) }; rajzol(); }
+    }
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>

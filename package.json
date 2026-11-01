@@ -1,0 +1,11 @@
+{
+  "name": "nyomozoiroda",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "ellenoriz": "node eszkozok/build.mjs --ellenoriz",
+    "build": "node eszkozok/build.mjs",
+    "proba": "node eszkozok/build.mjs && npx --yes serve dist"
+  },
+  "engines": { "node": ">=18" }
+}
