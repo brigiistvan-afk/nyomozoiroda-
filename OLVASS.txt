@@ -1,0 +1,2 @@
+Ide teheted a saját fotóidat az iratokhoz.
+Az ügyfájlban így hivatkozz rájuk: "kep": "kepek/fajlnev.jpg"

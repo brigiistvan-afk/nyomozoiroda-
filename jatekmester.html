@@ -78,6 +78,7 @@ pre.szoveg{white-space:pre-wrap;font-family:var(--f-type);font-size:15px;margin:
 import { visszafejt, ITER_JM, eredmenyKodOlvas, inditokod, ido } from "./motor/kozos.mjs";
 import { irat, esc } from "./motor/iratok.mjs";
 import { temaBeallit } from "./motor/betuk.mjs";
+import { ugyLista, ugyFajl } from "./motor/ugylista.mjs";
 
 const tarolo = {
   get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
@@ -94,7 +95,7 @@ const hatra = m => hms(Math.max(0, Math.ceil((m - perc()) * 60)));
 
 async function indul() {
   temaBeallit("noir1920");
-  try { LISTA = (await (await fetch("ugyek/lista.json", { cache: "no-cache" })).json()).ugyek || []; } catch (e) { LISTA = []; }
+  LISTA = await ugyLista();
   rajzol();
   setInterval(ketyeg, 1000);
 }
@@ -288,7 +289,7 @@ document.addEventListener("submit", async e => {
     const id = $("#ugy").value, jelszo = $("#jelszo").value, h = $("#belepHiba");
     h.hidden = true;
     const gomb = e.target.querySelector("button"); gomb.disabled = true; gomb.textContent = "Megnyitás…";
-    try { P = await (await fetch("ugyek/" + encodeURIComponent(id) + ".json", { cache: "no-cache" })).json(); }
+    try { P = await ugyFajl(LISTA.find(u => u.id === id) || { id }); }
     catch (er) { h.hidden = false; h.textContent = "Az ügyet nem sikerült betölteni."; gomb.disabled = false; gomb.textContent = "Megnyitás"; return; }
     const g = await visszafejt(P.jm, jelszo, P.jm.so, ITER_JM);
     gomb.disabled = false; gomb.textContent = "Megnyitás";
@@ -352,7 +353,7 @@ function ketyeg() {
   try {
     const a = JSON.parse(sessionStorage.getItem("nyi-jm-aktiv") || "null");
     if (a && LISTA.some(u => u.id === a.id)) {
-      P = await (await fetch("ugyek/" + encodeURIComponent(a.id) + ".json", { cache: "no-cache" })).json();
+      P = await ugyFajl(LISTA.find(u => u.id === a.id));
       const g = await visszafejt(P.jm, a.jelszo, P.jm.so, ITER_JM);
       if (g) { G = g; temaBeallit(G.tema); J = { start: null, bejelentes: "", eredmenyek: [], ...tarolo.get(jmKulcs(), {}) }; rajzol(); }
     }

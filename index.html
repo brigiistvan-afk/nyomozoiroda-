@@ -138,6 +138,7 @@ details.kesz-lista>summary::-webkit-details-marker{display:none}
 import { norm, egyezik, visszafejt, fejtoroKulcs, ITER_TITOK, eredmenyKod, inditokodbol, fejtoroPont, ladaPont } from "./motor/kozos.mjs";
 import { irat, esc } from "./motor/iratok.mjs";
 import { temaBeallit } from "./motor/betuk.mjs";
+import { ugyLista, ugyFajl } from "./motor/ugylista.mjs";
 
 /* ---------------- Ikonok ---------------- */
 const sv = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
@@ -182,11 +183,7 @@ const vissza = m => hms(((m || 0) - perc()) * 60);
 /* ---------------- Betöltés ---------------- */
 async function indul() {
   temaBeallit("noir1920");
-  try {
-    const r = await fetch("ugyek/lista.json", { cache: "no-cache" });
-    if (!r.ok) throw new Error(r.status);
-    LISTA = (await r.json()).ugyek || [];
-  } catch (e) { LISTA = []; }
+  LISTA = await ugyLista();
   const aktiv = tarolo.get("nyi:aktiv", null);
   if (aktiv && LISTA.some(x => x.id === aktiv)) await ugyBetolt(aktiv);
   else rajzol();
@@ -194,9 +191,7 @@ async function indul() {
 }
 async function ugyBetolt(id) {
   try {
-    const r = await fetch("ugyek/" + encodeURIComponent(id) + ".json", { cache: "no-cache" });
-    if (!r.ok) throw new Error(r.status);
-    U = await r.json();
+    U = await ugyFajl(LISTA.find(x => x.id === id) || { id });
   } catch (e) { U = null; uzen("Az ügyet nem sikerült betölteni. Ellenőrizzétek az internetet, és próbáljátok újra.", "hiba"); rajzol(); return; }
   temaBeallit(U.tema);
   A = { ...ures(), ...tarolo.get(kulcs(), {}) };

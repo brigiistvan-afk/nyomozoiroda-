@@ -1,83 +1,51 @@
 # Nyomozóiroda
 
 Csapatos nyomozós játék 20–40 főnek: telefonos fejtörők, valódi számzáras ládák és nyomtatott iratok.
-Egy ügy egy JSON-fájl. Ha feltöltesz egy újat a GitHubra, automatikusan megjelenik a játékosok appjában.
-Tárhely: GitHub Pages (ingyenes).
+Ingyenes tárhely: GitHub Pages. Egy ügy egy fájl. Ha feltöltesz egy újat az `ugyek` mappába, megjelenik a játékosok appjában.
 
-## Mi van a csomagban
+## Mi van a repóban
 
 ```
-ugyek/                 ← a feltölthető (titkosított) ügyfájlok — ITT VANNAK A JÁTÉKOK
-  utolso-orles.json    ← mintaügy: Az utolsó őrlés (1928), jelszó: proba
-web/                   ← a weboldal motorja (ritkán kell hozzányúlni)
-  index.html           ← csapat-app (telefon)
-  jatekmester.html     ← játékmesteri konzol: óra, megoldások, nyomtatás, eredmények, kivetítő
-  csomagolo.html       ← olvasható ügyfájlból titkosított, feltölthető fájlt készít
-  kepek/               ← saját fotók az iratokhoz
-  motor/               ← közös kód, iratsablonok, témák
-forras/                ← olvasható ügyfájlok — CSAK privát repóban (lásd forras/OLVASS.md)
-eszkozok/build.mjs     ← ellenőrzi az ügyeket, elkészíti az ügylistát és a weboldalt
-.github/workflows/     ← minden feltöltés után automatikusan frissíti a weboldalt
+index.html          ← csapat-app (telefon)
+jatekmester.html    ← játékmesteri konzol: óra, megoldások, nyomtatás, eredmények, kivetítő
+csomagolo.html      ← olvasható ügyfájlból titkosított, feltölthető fájlt készít
+motor/              ← a játék motorja (nem kell hozzányúlni)
+ugyek/              ← A JÁTÉKOK — ide kerülnek a csomagolt ügyfájlok
+  utolso-orles.json ← mintaügy: Az utolsó őrlés (1928), jelszó: proba
+kepek/              ← saját fotók az iratokhoz
 ```
 
-## Első beállítás (egyszer kell, kb. 5 perc)
+## Beállítás (egyszer)
 
-1. **Repó:** a GitHubon *New repository* → név: pl. `nyomozoiroda` → **Public** → *Create repository*.
-2. **Feltöltés:** a repó oldalán *uploading an existing file* → húzd rá a kicsomagolt mappa **tartalmát**
-   (a `.github` mappát is — ha a böngésző nem mutatja, lásd lent) → *Commit changes*.
-3. **Pages bekapcsolása:** *Settings → Pages → Build and deployment → Source:* **GitHub Actions**.
-4. **Első futás:** *Actions* fül → *Weboldal frissítése* → *Run workflow*. 1–2 perc múlva kész.
-5. A weboldal címe: `https://FELHASZNALONEV.github.io/nyomozoiroda/`
-   — a csapatok ezt nyitják meg, te a `…/jatekmester.html` oldalt.
+1. GitHub → **New repository** → név pl. `nyomozoiroda` → **Public** → **Create repository**.
+2. **uploading an existing file** → húzd rá a mappa **tartalmát** (index.html, jatekmester.html, csomagolo.html, motor, ugyek, kepek, README.md) → **Commit changes**.
+3. **Settings → Pages → Build and deployment**:
+   - Source: **Deploy from a branch**
+   - Branch: **main** és **/ (root)** → **Save**
+4. 1–2 perc múlva a Pages oldal tetején megjelenik a cím: `https://FELHASZNALONEV.github.io/nyomozoiroda/`
+   — ezt nyitják meg a csapatok. A konzol: `…/jatekmester.html`.
 
-> **A `.github` mappa feltöltése:** a rejtett mappákat a Mac Finder és a Windows Intéző nem mindig mutatja.
-> Ha nem sikerül, a GitHubon: *Add file → Create new file* → név: `.github/workflows/weboldal.yml`,
-> és másold bele a fájl tartalmát.
+## Új ügy
 
-**Miért lehet nyilvános a repó?** Az `ugyek/` mappában a fájlok titkosítva vannak: a megfejtések csak
-lenyomatként szerepelnek, a jutalmak és a ládák iratai csak a helyes válasszal, a teljes megoldás csak
-a játékmesteri jelszóval nyílik ki. Olvasható ügyfájlt nyilvános repóba **soha** ne tölts fel.
+1. Nyisd meg a **Csomagolót** (`…/csomagolo.html`).
+2. Válaszd ki az olvasható ügyfájlt, add meg a játékmesteri jelszót → **Ellenőrzés és csomagolás** → letöltés.
+3. A repóban lépj be az **ugyek** mappába → **Add file → Upload files** → húzd rá → **Commit changes**.
+4. Legfeljebb kb. 10 perc múlva megjelenik az appban (a GitHub ennyi ideig tárolja a régi változatot).
 
-## Új ügy feltöltése
+Javítás: ugyanazzal a fájlnévvel töltsd fel újra. Törlés: töröld a fájlt az `ugyek` mappából.
+Olvasható (titkosítatlan) ügyfájlt **soha** ne tölts fel a nyilvános repóba.
 
-1. Nyisd meg a weboldalon a **Csomagolót** (`…/csomagolo.html`, a játékmesteri belépőoldalról is elérhető).
-2. Válaszd ki az olvasható ügyfájlt (a generátortól), add meg a játékmesteri jelszót → *Ellenőrzés és csomagolás*.
-   Ha hiba van benne (hiányzó mező, rossz kódhossz, ismétlődő azonosító), magyarul kiírja.
-3. A letöltött fájlt töltsd fel a repó **ugyek/** mappájába (*Add file → Upload files → Commit*).
-4. 1–2 perc múlva az új ügy megjelenik a csapat-app ügyválasztójában és a konzolban.
-   Az *Actions* fülön látod, hogy kész-e (zöld pipa). Ha piros, a naplóban le van írva, mi a gond,
-   és addig a régi, működő változat marad élesben.
-
-**A mintaügy jelszava `proba`.** Csomagold újra a saját jelszavaddal: a forrását
-(`utolso-orles-forras.json`) külön kaptad meg. Ezt **ne** tedd a nyilvános repóba.
-
-**Ügy törlése:** töröld a fájlt az `ugyek/` mappából. **Sorrend:** az ügyfájlban a `"sorrend": 10` mező
-előrébb hozza a listában.
+**A mintaügy jelszava `proba`** — csomagold újra a saját jelszavaddal (a forrását külön kaptad: `utolso-orles-forras.json`).
 
 ## Egy játék menete
 
 | Ki | Mit csinál |
 |---|---|
-| Előtte | Konzol → **Nyomtatás**: beállítod a csapatok számát, kinyomtatod a csomagot (játékmesteri lap, láda-beállító, címkék, QR-plakát, borítékok tartalma). A borítékokat a ládákba teszed, a lakatokat a kódra állítod. |
-| Kezdés | Konzol → **Óra indítása**. Megjelenik a 4 jegyű **indítókód**, ezt kivetíted. |
-| Csapatok | Csapatonként egy telefon: megnyitják az oldalt, kiválasztják az ügyet, beírják a csapatnevet és az indítókódot. Ettől minden telefonon ugyanaz az óra fut. |
-| Játék | A fejtörők **egymástól függetlenek**, bármilyen sorrendben megoldhatók, így a csapatok a saját tempójukban haladnak. A felvonások időre nyílnak. A **ládák időzárral** nyílnak: a láda feladványa csak az időkapu után látszik, a helyes kód beírásakor a telefon rögzíti az időt. Minél hamarabb nyitják ki, annál több pont jár. |
-| Láda | A telefon megmondja a teendőt: kinyitni, a saját borítékot kivenni, visszazárni, összekeverni. A boríték iratai a telefonon is megjelennek. |
-| Vége | A csapatok a telefonon leadják a vádiratot, és kapnak egy **eredménykódot** (pl. `K7M-Q2XP`). Ezt beírod a konzol **Eredmények** fülén, és kész a ranglista. A **Kivetítő** nézet mutatja az órát, az indítókódot, a következő ládát, a bejelentéseket és az állást. |
-
-**Internet nélkül is működik?** Az oldal betöltéséhez kell net, utána a játék a telefonon fut (a pontok és megfejtések helyben tárolódnak).
-
-**Ki lehet-e lesni a megoldást?** A megfejtések csak lenyomatként szerepelnek, a jutalmak és a ládák iratai titkosítva vannak, és csak a helyes válasszal nyílnak ki. A megoldás csak a játékmesteri jelszóval olvasható. (Egy programozó a 3–4 jegyű kódokat sok próbálkozással elvileg kitalálhatná, de egy rendezvényen ez nem reális veszély.)
-
-## Helyi kipróbálás (opcionális)
-
-```
-npm run ellenoriz        # csak ellenőrzi a forras/ mappát
-npm run proba            # build + helyi szerver (http://localhost:3000)
-```
-Node 18+ kell. A `dist/` mappát ne töltsd fel, azt a GitHub Actions készíti el.
-
----
+| Előtte | Konzol → **Nyomtatás**: csapatszám, nyomtatás (játékmesteri lap, láda-beállító, címkék, QR-plakát, borítékok). Borítékok a ládákba, lakatok a kódra. |
+| Kezdés | Konzol → **Óra indítása** → a 4 jegyű **indítókódot** kivetíted. |
+| Csapatok | Csapatonként egy telefon: ügy kiválasztása, csapatnév, indítókód. Minden telefonon ugyanaz az óra fut. |
+| Játék | A fejtörők függetlenek, bármilyen sorrendben megoldhatók. A ládák időzárral nyílnak; a helyes kód beírásakor a telefon rögzíti az időt (gyorsabb = több pont), és megmondja, mit kell tenni a ládánál. |
+| Vége | Vádirat a telefonon → **eredménykód** → beírod a konzol **Eredmények** fülén → ranglista a **Kivetítőn**. |
 
 ## Az ügyfájl formátuma
 
@@ -141,13 +109,13 @@ Minden irat: `{ "id": "egyedi", "tipus": "…", "cim": "…", "datum": "…", "s
 | `nyugta` | keskeny nyugta |
 | `dokumentum` | hivatalos irat; a `fejlec` mező adja a fejlécet (pl. „SZAKVÉLEMÉNY”), `"egett": true` = félig elégett papír |
 | `ujsag` | újságkivágás (`forras`: az újság neve) |
-| `fenykep` | régi fénykép. `abra`: beépített rajz, vagy `kep`: saját kép útvonala (pl. `kepek/foto1.jpg` a `web/kepek/` mappából). `felirat`: a kép alá, `szoveg`: a kép hátoldalára |
+| `fenykep` | régi fénykép. `abra`: beépített rajz, vagy `kep`: saját kép útvonala (pl. `kepek/foto1.jpg` a `kepek/` mappából). `felirat`: a kép alá, `szoveg`: a kép hátoldalára |
 | `helyszinrajz` | alaprajz a `rajz` mezőből (szobák, ajtók, számozott jelek, szaggatott vonalak, 0–100-as koordinátákkal; lásd a mintaügy D04 iratát) |
 
 Beépített rajzok (`abra`): `zsebora`, `setapalca`, `zsebkendo`, `lampas`, `sziluett`, `gyongysor`, `fokonyv`,
 `kulcs`, `boritek`, `uveg`, `labnyom`, `malomkerek`, `kes`, `pohar`.
 
-**Saját fotó:** tedd a képet a `web/kepek/` mappába, és az iratban: `"tipus": "fenykep", "kep": "kepek/kep.jpg"`.
+**Saját fotó:** tedd a képet a `kepek/` mappába, és az iratban: `"tipus": "fenykep", "kep": "kepek/kep.jpg"`.
 
 ### Jó tudni egy új ügy írásakor
 
