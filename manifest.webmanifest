@@ -1,0 +1,16 @@
+{
+  "name": "ÉlményMűhely",
+  "short_name": "ÉlményMűhely",
+  "description": "Nyomozós csapatjáték",
+  "lang": "hu",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#15241c",
+  "theme_color": "#15241c",
+  "icons": [
+    { "src": "ikon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "ikon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "ikon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
