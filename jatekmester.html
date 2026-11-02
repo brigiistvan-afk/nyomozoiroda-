@@ -42,6 +42,12 @@ html[data-skin="modern"]{
   --accent:#1d55b0; --accent-ink:#ffffff; --accent-soft:#dbe6f8; --stamp:#c0392b; --ok:#1e7a4a; --ok-soft:#dcf0e3; --hl:#fff0b3;
   --f-display:"Archivo", system-ui, sans-serif;
 }
+html[data-skin="teli"]{
+  --bg:#0f2340; --bg-2:#16305a; --bg-3:#1e3d6e; --bg-ink:#f4f8ff; --bg-muted:#c9d8f0; --bg-line:#36578a;
+  --paper:#ffffff; --paper-2:#eef4fb; --ink:#13213a; --muted:#4a5b78; --line:#cfdcec;
+  --accent:#c8202f; --accent-ink:#ffffff; --accent-soft:#fde2e4; --stamp:#c8202f; --ok:#1f7a4a; --ok-soft:#dcf0e3; --hl:#ffe08a;
+  --f-display:"Fredoka", "Baloo 2", system-ui, sans-serif;
+}
 html[data-skin="borzongos"]{
   --bg:#140f10; --bg-2:#1f1718; --bg-3:#2b2021; --bg-ink:#f1e6da; --bg-muted:#bda998; --bg-line:#433435;
   --paper:#f1e8dc; --paper-2:#e4d7c5; --ink:#1b1312; --muted:#5d4b44; --line:#c6b09a;
@@ -164,6 +170,20 @@ html[data-skin="modern"] .hatterkep{background:linear-gradient(180deg,rgba(238,2
 
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 
+/* ---------- Téli (gyerek) téma: nagyobb betű, piros-arany gombok, havas éjszaka ---------- */
+html[data-skin="teli"] body{font-size:20px}
+html[data-skin="teli"]{--paper:rgba(14,32,64,.6); --accent:#ffd36b; --hl:#ffe08a; --muted:#c9d8f0}
+html[data-skin="teli"] .gomb:not(.masod):not(.halk):not(.veszely){background:linear-gradient(180deg,#ff6b6b,#c8202f);border-color:#c8202f;color:#fff}
+html[data-skin="teli"] h1, html[data-skin="teli"] h2{font-family:var(--f-display);letter-spacing:.01em}
+html[data-skin="teli"] .hatterkep{background:linear-gradient(180deg,rgba(8,18,40,.25),rgba(8,18,40,.15) 40%,rgba(8,18,40,.55)),var(--hatter-kep,var(--hatter-alap)) center/cover no-repeat,var(--bg)}
+/* Kép a feladványban (pl. számolós, árnyékos, útvesztős) */
+.kartyakep{background:#fff;border-radius:16px;padding:10px;margin:4px 0 10px;display:flex;justify-content:center}
+.kartyakep svg{width:100%;height:auto;max-height:62vh;display:block}
+.kartya .feladat .emoji, .emojisor{font-size:1.6em;letter-spacing:.08em;line-height:1.5}
+.kartyakep img{width:100%;height:auto;border-radius:10px;display:block}
+.portre{width:88px;height:88px;border-radius:50%;object-fit:cover;flex:none;border:3px solid var(--hl);box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.i-foto img{width:100%;height:auto;display:block}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
@@ -212,6 +232,13 @@ pre.szoveg{white-space:pre-wrap;font-family:var(--f-type);font-size:15px;margin:
 .nyomlap .iratok{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
 .nyomlap .iratok .irat{box-shadow:none}
 .nyomlap .iratok .i-fenykep,.nyomlap .iratok .i-helyszinrajz{grid-column:span 1}
+.allomaslap{display:flex;flex-direction:column;align-items:center;text-align:center;gap:16px}
+.allomas-utasitas{white-space:pre-wrap;font-size:22px;line-height:1.5;max-width:640px}
+.hajtas{width:100%;border-top:3px dashed #111;padding-top:10px;margin-top:40px;font-family:var(--f-type);font-size:13px}
+.allomaskod{transform:rotate(180deg);font-size:28px;display:flex;flex-direction:column;align-items:center;margin-top:30px}
+.allomaskod b{font-family:var(--f-type);font-size:64px;letter-spacing:.12em}
+.plakatcsik{overflow:hidden;margin:0 auto;border:2px dashed #999;break-inside:avoid}
+.plakatcsik svg,.plakatcsik img{display:block;width:100%;height:auto}
 .cimkelap{align-items:center;justify-content:center;text-align:center;min-height:60vh;gap:22px;border:6px double #111}
 .cimkelap .nagyszam{font-family:var(--f-type);font-weight:700;font-size:90px;line-height:1}
 .cimkelap h2{font-size:52px}
@@ -483,6 +510,10 @@ const pecset = d => d.pecset ? `<div class="i-pecset" aria-hidden="true"><span>$
 const alair = d => d.alairas ? `<div class="i-alairas">${esc(d.alairas)}</div>` : "";
 
 const pdfNev = p => typeof p === "string" ? p : p.nev;
+/** Kép: sima fájlnév/URL, vagy titkosított fájl ({fajl, kulcs, tipus}) — ez utóbbit a kezelő tölti be */
+const kepTag = (k, alt = "") => typeof k === "string"
+  ? `<img src="${esc(k)}" alt="${esc(alt || "")}" loading="lazy">`
+  : `<img class="i-titkoskep" alt="${esc(alt || "")}" data-kep-fajl="${esc(k.fajl)}" data-kep-kulcs="${esc(k.kulcs)}" data-kep-tipus="${esc(k.tipus || "image/jpeg")}" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=">`;
 function pdfResz(p, opt) {
   if (opt.nyomtatas) return `<b>Nyomtasd ki külön, és tedd a borítékba:</b><span class="i-pdfnev">${esc(pdfNev(p))}</span>`;
   if (typeof p === "string") return `<a href="${esc(p)}" target="_blank" rel="noopener">PDF megnyitása ›</a>`;
@@ -497,6 +528,21 @@ const pdfGomb = (p, felirat = "PDF megnyitása") => typeof p === "string"
 /* Titkosított PDF-ek: amint egy ilyen gomb megjelenik az oldalon, letöltjük és visszafejtjük,
    hogy a gomb egy koppintással megnyissa (a böngészők a késleltetett felugró ablakot letiltanák). */
 const pdfTar = new Map();
+async function titkosBlob(fajl, kulcs, tipus) {
+  if (!pdfTar.has(fajl)) pdfTar.set(fajl, (async () => {
+    const r = await fetch(fajl, { cache: "force-cache" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const pt = await PDF_SEGED.pdfVisszafejt(await r.arrayBuffer(), kulcs);
+    if (!pt) throw new Error("kulcs");
+    return URL.createObjectURL(new Blob([pt], { type: tipus }));
+  })());
+  try { return await pdfTar.get(fajl); } catch (e) { pdfTar.delete(fajl); throw e; }
+}
+async function kepElokeszit(img) {
+  img.dataset.kepKesz = "1";
+  try { img.src = await titkosBlob(img.dataset.kepFajl, img.dataset.kepKulcs, img.dataset.kepTipus); }
+  catch (e) { img.alt = "A kép nem tölthető be"; delete img.dataset.kepKesz; }
+}
 async function pdfElokeszit(a) {
   a.dataset.pdfKesz = "1";
   const fajl = a.dataset.pdfFajl;
@@ -522,7 +568,7 @@ const PDF_SEGED = {};
 /** Egyszer kell meghívni oldalbetöltéskor (a visszafejtő függvényt adja át). */
 function pdfKezelo(pdfVisszafejt) {
   PDF_SEGED.pdfVisszafejt = pdfVisszafejt;
-  const nez = () => document.querySelectorAll("a.i-pdfgomb:not([data-pdf-kesz])").forEach(pdfElokeszit);
+  const nez = () => { document.querySelectorAll("a.i-pdfgomb:not([data-pdf-kesz])").forEach(pdfElokeszit); document.querySelectorAll("img.i-titkoskep:not([data-kep-kesz])").forEach(kepElokeszit); };
   new MutationObserver(nez).observe(document.body, { childList: true, subtree: true });
   nez();
 }
@@ -535,7 +581,7 @@ function irat(d, opt = {}) {
   let belso;
   if (d.pdf) {
     // saját PDF: a telefonon megnyitható, nyomtatásban emlékeztető
-    belso = `${fej((IRATNEVEK[t] || "IRAT").toUpperCase(), d)}${cimsor}${d.kep ? `<div class="i-foto"><img src="${esc(d.kep)}" alt="${esc(d.cim || "")}"></div>` : ""}${d.szoveg ? szoveg(d.szoveg) : ""}
+    belso = `${fej((IRATNEVEK[t] || "IRAT").toUpperCase(), d)}${cimsor}${d.kep ? `<div class="i-foto">${kepTag(d.kep, d.cim)}</div>` : ""}${d.szoveg ? szoveg(d.szoveg) : ""}
       <div class="i-pdf">${pdfResz(d.pdf, opt)}</div>`;
     return `<article class="irat i-${esc(t)}">${azon}${belso}</article>`;
   }
@@ -553,7 +599,7 @@ function irat(d, opt = {}) {
     case "ujsag":
       belso = `<div class="i-ujsagfej">${esc(d.forras || "Fejérmegyei Hírlap")}${d.datum ? " · " + esc(d.datum) : ""}</div>${d.cim ? `<div class="i-ujsagcim">${esc(d.cim)}</div>` : ""}${szoveg(d.szoveg)}`; break;
     case "fenykep":
-      belso = `<div class="i-foto">${d.kep ? `<img src="${esc(d.kep)}" alt="${esc(d.felirat || d.cim || "")}">` : abraSvg(d.abra, d.cim)}</div>
+      belso = `<div class="i-foto">${d.kep ? kepTag(d.kep, d.felirat || d.cim) : abraSvg(d.abra, d.cim)}</div>
         <div class="i-felirat">${esc(d.felirat || d.cim || "")}</div>${d.szoveg ? `<div class="i-hatul"><b>A kép hátoldalán:</b> ${esc(d.szoveg)}</div>` : ""}`; break;
     case "helyszinrajz":
       belso = `${fej("HELYSZÍNRAJZ", d)}${cimsor}${d.rajz ? rajzSvg(d.rajz) : d.abra ? `<div class="i-foto">${abraSvg(d.abra, d.cim)}</div>` : ""}${d.szoveg ? szoveg(d.szoveg) : ""}${alair(d)}`; break;
@@ -563,7 +609,7 @@ function irat(d, opt = {}) {
   return `<article class="irat i-${esc(t)}${d.egett ? " i-egett" : ""}">${azon}${belso}</article>`;
 }
 
-return { esc, ABRAK, ABRA_NEVEK, pdfGomb, pdfKezelo, irat };
+return { esc, ABRAK, ABRA_NEVEK, kepTag, pdfGomb, pdfKezelo, irat };
 })();
 const BETUK = (() => {
 
@@ -575,7 +621,8 @@ const DISZ = {
   noir1920: "family=DM+Serif+Display:ital@0;1",
   vadasz: "family=Cormorant+Garamond:wght@600;700",
   modern: "family=Archivo:wght@700;800",
-  borzongos: "family=IM+Fell+English:ital@0;1"
+  borzongos: "family=IM+Fell+English:ital@0;1",
+  teli: "family=Fredoka:wght@500;700"
 };
 function temaBeallit(tema) {
   const t = DISZ[tema] ? tema : "noir1920";
@@ -592,7 +639,7 @@ const K = KOZOS; const { ABRA_NEVEK } = IRATOK;
 // Ügyfájl ellenőrzése és csomagolása (titkosítása) — a böngészőben (Csomagoló) és a buildben (Node) is ezt használjuk.
 
 
-const TEMAK = ["noir1920", "vadasz", "modern", "borzongos"];
+const TEMAK = ["noir1920", "vadasz", "modern", "borzongos", "teli"];
 const IRATTIPUSOK = ["pdf", "jegyzokonyv", "vallomas", "level", "tavirat", "naplo", "feljegyzes", "nyugta", "dokumentum", "ujsag", "fenykep", "helyszinrajz"];
 const NEHEZSEGEK = ["konnyu", "kozepes", "nehez"];
 
@@ -627,6 +674,8 @@ function ellenoriz(u, fajl = "ügyfájl") {
     if (p.nehezseg && !NEHEZSEGEK.includes(p.nehezseg)) h(`${p.id}: a nehézség lehet ${NEHEZSEGEK.join(" / ")}`);
     (p.kartyak || []).forEach((c, i) => { if (!c.szoveg) h(`${p.id}: a ${i + 1}. kártyának nincs szövege`); if (!K.norm(c.valasz)) h(`${p.id}: a ${i + 1}. kártyának nincs (vagy csak írásjelből álló) válasza`); });
     if (!(p.sugok || []).length) f(`${p.id}: nincs súgó`);
+    if (p.allomas && !p.allomas.utasitas) h(`${p.id}: az állomásnak nincs „utasitas” mezője`);
+    (p.kartyak || []).forEach((c, i) => { if (c.kep && !/^\s*<svg[\s>]/i.test(c.kep) && !/\.(jpe?g|png|webp)$/i.test(c.kep)) h(`${p.id}: a ${i + 1}. kártya „kep” mezője <svg>…</svg> vagy képfájl (.jpg, .png) lehet`); });
     (p.jutalom || []).forEach(d => iratEll(d, `${p.id} jutalma`));
   });
   if (!(u.ladak || []).length) f("nincs láda — a játék ládák nélkül is működik");
@@ -645,11 +694,12 @@ function ellenoriz(u, fajl = "ügyfájl") {
     (l.iratok || []).forEach(d => iratEll(d, `${l.id} iratai`));
   });
   (u.vadirat?.kerdesek || []).forEach(q => {
-    if (!["tettes", "inditek", "fegyver", "ido"].includes(q.id)) h(`vádirat: ismeretlen kérdés „${q.id}” (tettes / inditek / fegyver / ido)`);
+    if (!q.id) h("záró kérdés: hiányzik az „id”");
+    if (q.pont == null && u.pontozas?.vadirat?.[q.id] == null) h(`záró kérdés „${q.id}”: nincs pontérték (adj meg „pont” mezőt)`);
     if (!Array.isArray(q.opciok) || q.opciok.length < 2 || q.opciok.length > 8) h(`vádirat „${q.id}”: 2–8 válaszlehetőség kell`);
     if (!(q.helyes >= 0 && q.helyes < (q.opciok || []).length)) h(`vádirat „${q.id}”: a „helyes” index nem jó`);
   });
-  if ((u.vadirat?.kerdesek || []).length !== 4) h("a vádiratban pontosan 4 kérdés kell: tettes, inditek, fegyver, ido");
+  if ((u.vadirat?.kerdesek || []).length !== 4) h("a záró részben (vadirat) pontosan 4 kérdés kell");
   return { hibak, figy };
 }
 
@@ -658,7 +708,12 @@ function ellenoriz(u, fajl = "ügyfájl") {
 const osszesIrat = u => [...(u.dosszie || []), ...(u.fejtorok || []).flatMap(p => p.jutalom || []), ...(u.ladak || []).flatMap(l => l.iratok || [])];
 /** Az ügyben hivatkozott, még nem titkosított PDF-fájlnevek. */
 const pdfTartok = u => [...osszesIrat(u), ...(u.ladak || [])];   // iratok és ládák is kaphatnak PDF-et
-const kellPdfek = u => [...new Set(pdfTartok(u).filter(d => typeof d.pdf === "string").map(d => d.pdf))];
+/** Helyi képfájl-e (nem webcím, nem beágyazott adat, nem SVG-kód) */
+const helyiKep = k => typeof k === "string" && /\.(jpe?g|png|webp)$/i.test(k) && !/^(https?:|data:)/i.test(k);
+/** Az ügyben hivatkozott, még nem titkosított fájlok: PDF-ek és az iratok fényképei */
+const kellPdfek = u => [...new Set([
+  ...pdfTartok(u).filter(d => typeof d.pdf === "string").map(d => d.pdf),
+  ...osszesIrat(u).filter(d => helyiKep(d.kep)).map(d => d.kep)])];
 /**
  * A „pdf”: "valami.pdf" hivatkozásokat titkosított fájlra cseréli.
  * pdfek: { "valami.pdf": Uint8Array }. Vissza: { ugy (új másolat), fajlok: [{ nev, adat }], hianyzik: [...] }
@@ -670,16 +725,19 @@ async function pdfekBecsomagolasa(u, pdfek) {
   const hianyzik = kellPdfek(ugy).filter(n => !pdfek[n]);
   if (hianyzik.length) return { ugy, fajlok: [], hianyzik };
   const kesz = new Map(), fajlok = [];
-  for (const d of pdfTartok(ugy)) {
-    if (typeof d.pdf !== "string") continue;
-    if (!kesz.has(d.pdf)) {
-      const { adat, kulcs } = await K.pdfTitkosit(pdfek[d.pdf]);
+  const titkosit = async eredeti => {
+    if (!kesz.has(eredeti)) {
+      const { adat, kulcs } = await K.pdfTitkosit(pdfek[eredeti]);
       const nev = `${ugy.id}-${Array.from(globalThis.crypto.getRandomValues(new Uint8Array(6)), b => b.toString(16).padStart(2, "0")).join("")}.bin`;
-      fajlok.push({ nev, adat, eredeti: d.pdf });
-      kesz.set(d.pdf, { fajl: nev, kulcs, nev: d.pdf });
+      const ext = eredeti.split(".").pop().toLowerCase();
+      const tipus = ext === "pdf" ? "application/pdf" : ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+      fajlok.push({ nev, adat, eredeti });
+      kesz.set(eredeti, { fajl: nev, kulcs, nev: eredeti, tipus });
     }
-    d.pdf = kesz.get(d.pdf);
-  }
+    return kesz.get(eredeti);
+  };
+  for (const d of pdfTartok(ugy)) if (typeof d.pdf === "string") d.pdf = await titkosit(d.pdf);
+  for (const d of osszesIrat(ugy)) if (helyiKep(d.kep)) d.kep = await titkosit(d.kep);
   return { ugy, fajlok, hianyzik: [] };
 }
 
@@ -691,7 +749,7 @@ async function csomagol(u, JELSZO) {
   for (const p of u.fejtorok) {
     const so = K.veletlenSo();
     const kartyak = [];
-    for (const [i, c] of p.kartyak.entries()) kartyak.push({ cim: c.cim || "", szoveg: c.szoveg, hash: await K.lenyomat(c.valasz, so + ":" + i) });
+    for (const [i, c] of p.kartyak.entries()) kartyak.push({ cim: c.cim || "", szoveg: c.szoveg, ...(c.kep ? { kep: c.kep } : {}), hash: await K.lenyomat(c.valasz, so + ":" + i) });
     const titok = await K.titkosit({ jutalom: p.jutalom, magyarazat: p.magyarazat }, K.fejtoroKulcs(p.kartyak.map(c => c.valasz)), so, K.ITER_TITOK);
     fejtorok.push({ id: p.id, cim: p.cim, felvonas: p.felvonas || 1, nyilik: +p.nyilik || 0, nehezseg: p.nehezseg, mechanika: p.mechanika || "", kartyak, sugok: p.sugok || [], so, titok });
   }
@@ -709,9 +767,11 @@ async function csomagol(u, JELSZO) {
     formatum: 1, id: u.id, cim: u.cim, alcim: u.alcim, tema: u.tema, jatekosok: u.jatekosok || "", idotartam: +u.idotartam, sorrend: u.sorrend ?? 0, hatter: u.hatter || "",
     korszak: u.korszak || "", helyszin: u.helyszin || "", bevezeto: u.bevezeto, megbizas: u.megbizas,
     aldozat: u.aldozat,
-    gyanusitottak: u.gyanusitottak.map(g => ({ id: g.id, nev: g.nev, kor: g.kor, kapcsolat: g.kapcsolat, leiras: g.leiras })),
+    gyanusitottak: u.gyanusitottak.map(g => ({ id: g.id, nev: g.nev, kor: g.kor, kapcsolat: g.kapcsolat, leiras: g.leiras, ...(g.kep ? { kep: g.kep } : {}) })),
     dosszie: u.dosszie, fejtorok, ladak,
-    vadirat: { nyilik: +(u.vadirat.nyilik ?? 0), kerdesek: u.vadirat.kerdesek.map(q => ({ id: q.id, kerdes: q.kerdes, opciok: q.opciok })) },
+    vadirat: { nyilik: +(u.vadirat.nyilik ?? 0), bevezeto: u.vadirat.bevezeto || "", kerdesek: u.vadirat.kerdesek.map(q => ({ id: q.id, kerdes: q.kerdes, opciok: q.opciok, ...(q.pont != null ? { pont: +q.pont } : {}) })) },
+    ...(u.szavak ? { szavak: u.szavak } : {}),
+    ...(u.kozos ? { kozos: true } : {}),
     pontozas: u.pontozas,
     jm: { so: jmSo, ...jm }
   };
@@ -724,7 +784,7 @@ const csomagolt = u => u && u.formatum === 1 && u.jm && u.jm.ct && Array.isArray
 const listaSor = u => ({ id: u.id, cim: u.cim, alcim: u.alcim, tema: u.tema, jatekosok: u.jatekosok || "", idotartam: +u.idotartam, sorrend: u.sorrend ?? 0,
   fejtorok: (u.fejtorok || []).length, ladak: (u.ladak || []).length, sorrend: u.sorrend ?? 0 });
 
-return { ellenoriz, osszesIrat, kellPdfek, pdfekBecsomagolasa, csomagol, csomagolt, listaSor };
+return { ellenoriz, osszesIrat, helyiKep, kellPdfek, pdfekBecsomagolasa, csomagol, csomagolt, listaSor };
 })();
 const UGYLISTA = (() => {
 const { listaSor } = CSOMAG;
@@ -910,20 +970,22 @@ function vezerles() {
 }
 
 /* --- Megoldások --- */
+/* A megoldás fő sorai: nyomozós ügynél a klasszikus mezők, más játéknál a "sorok": [[címke, érték], …] */
+function megoldasSorok(s) {
+  if (Array.isArray(s.sorok)) return s.sorok;
+  return [["Tettes", s.tettes], ["Indíték", s.inditek], ["Fegyver", s.fegyver], ["Időpont", (s.valodiIdo || "") + (s.hamisIdo ? ` (hamis: ${s.hamisIdo})` : "")], ["Módszer", s.modszer]].filter(x => x[1]);
+}
+const jmSzo = (k, alap) => (G.szavak && G.szavak[k]) || alap;
 function megoldasok() {
   const s = G.megoldas;
-  return `
+  return `${G.konyha ? `<section class="lap"><span class="felirat halv">${esc(G.konyha.cim || "Konyhai lap")}</span><div style="white-space:pre-wrap">${esc(G.konyha.szoveg)}</div></section>` : ""}
   <section class="lap"><span class="felirat halv">A megoldás</span>
     <dl style="display:grid;grid-template-columns:140px 1fr;gap:8px 14px;margin:0">
-      <dt class="halv">Tettes</dt><dd style="margin:0"><b>${esc(s.tettes)}</b></dd>
-      <dt class="halv">Indíték</dt><dd style="margin:0">${esc(s.inditek)}</dd>
-      <dt class="halv">Fegyver</dt><dd style="margin:0">${esc(s.fegyver)}</dd>
-      <dt class="halv">Időpont</dt><dd style="margin:0">${esc(s.valodiIdo)}${s.hamisIdo ? ` (hamis: ${esc(s.hamisIdo)})` : ""}</dd>
-      <dt class="halv">Módszer</dt><dd style="margin:0">${esc(s.modszer)}</dd></dl>
+      ${megoldasSorok(s).map(([k, v], i) => `<dt class="halv">${esc(k)}</dt><dd style="margin:0">${i ? esc(v) : `<b>${esc(v)}</b>`}</dd>`).join("")}</dl>
     <h3>Logikai lánc — felolvasáshoz</h3><ol style="margin:0;padding-left:22px;display:grid;gap:6px">${s.lanc.map(x => `<li>${esc(x)}</li>`).join("")}</ol>
-    <h3>A tettes vallomása</h3><p style="font-family:var(--f-display);font-style:italic;font-size:20px">${esc(s.vallomas)}</p>
+    <h3>${esc(s.vallomasCim || "A tettes vallomása")}</h3><p style="font-family:var(--f-display);font-style:italic;font-size:20px">${esc(s.vallomas)}</p>
   </section>
-  <section class="lap"><span class="felirat halv">Gyanúsítottak — a valóság</span>
+  <section class="lap"><span class="felirat halv">${esc(jmSzo("szereplok", "Gyanúsítottak"))} — a valóság</span>
     <div class="tablaburok"><table><thead><tr><th>Név</th><th>Indíték</th><th>Hol volt valójában</th></tr></thead><tbody>
     ${G.gyanusitottak.map(g => `<tr><td><b>${esc(g.nev)}</b></td><td>${esc(g.inditek || "")}</td><td>${esc(g.valojaban || "")}</td></tr>`).join("")}</tbody></table></div></section>
   <section class="lap"><span class="felirat halv">Fejtörők</span>
@@ -959,7 +1021,7 @@ function nyomtatas() {
   const lapok = [], titkos = [];
   // 1. Játékmesteri lap (TITKOS)
   titkos.push(lap("Játékmesteri lap — titkos", "1 példány", `<h2>${esc(G.cim)}</h2><p>${esc(G.alcim)} · ${esc(G.jatekosok)} · ${ido(G.idotartam)} óra · ${T} csapat</p>
-    <h3>Megoldás</h3><p><b>Tettes:</b> ${esc(G.megoldas.tettes)} · <b>Időpont:</b> ${esc(G.megoldas.valodiIdo)} · <b>Fegyver:</b> ${esc(G.megoldas.fegyver)}</p><p><b>Indíték:</b> ${esc(G.megoldas.inditek)}</p>
+    <h3>Megoldás</h3><p>${megoldasSorok(G.megoldas).map(([k, v]) => `<b>${esc(k)}:</b> ${esc(v)}`).join("<br>")}</p>
     <h3>Logikai lánc</h3><ol>${G.megoldas.lanc.map(x => `<li>${esc(x)}</li>`).join("")}</ol>
     <h3>Forgatókönyv</h3><table>${esemenyek().map(x => `<tr><td><b>${ido(x.perc)}</b></td><td><b>${esc(x.cim)}</b> — ${esc(x.teendo)}</td></tr>`).join("")}</table>
     <h3>Fejtörők megfejtései</h3><table>${G.fejtorok.map(f => `<tr><td>${esc(f.id)}</td><td>${esc(f.cim)}</td><td class="kod">${f.kartyak.map(c => esc(c.valasz)).join(" | ")}</td></tr>`).join("")}</table>`));
@@ -967,15 +1029,27 @@ function nyomtatas() {
   titkos.push(lap("Láda-beállító lap — titkos", "1 példány", `<h2>Ládák előkészítése</h2>
     <p>Minden ládába tegyél <b>${T} borítékot</b> (csapatonként egyet). A borítékokra írd rá a láda nevét. A lakatot állítsd a kódra, zárd be, és keverd össze a számokat.</p>
     <table><tr><th>Láda</th><th>Kód</th><th>Hová</th><th>Nyílik</th><th>Borítékba</th></tr>${G.ladak.map(l => `<tr><td><b>${esc(l.nev)}</b></td><td class="kod" style="font-size:22px">${esc(l.kod)}</td><td>${esc(l.hely)}</td><td>${ido(l.nyilik)}</td><td>${l.pdf ? `<b>Saját PDF: ${esc(l.pdf.nev || l.pdf)}</b> (${T} példány, a Nyomtatás → Játékos anyagok fülről)<br><span style="color:#666">${l.iratok.map(d => esc(d.cim)).join(" · ")}</span>` : l.iratok.map(d => esc(d.cim) + (d.pdf ? ` <b>(külön PDF: ${esc(d.pdf.nev || d.pdf)})</b>` : "")).join("<br>")}</td></tr>`).join("")}</table>`));
+  // 2b. Konyhai lap (ha van, pl. gasztrojátéknál)
+  if (G.konyha) titkos.push(lap(G.konyha.cim || "Konyhai lap", "1 példány a konyhára", `<h2>${esc(G.konyha.cim || "Konyhai lap")}</h2><div style="white-space:pre-wrap;font-size:16px">${esc(G.konyha.szoveg)}</div>`));
   // 3. Belépő plakát QR-kóddal
-  lapok.push(lap("Plakát a csapatoknak", "1–2 példány", `<div class="cimkelap" style="border:0;min-height:auto"><div style="display:flex;justify-content:center">${logoBlokk("nyomozós csapatjáték", 72).replace('class="marka"', 'class="marka" style="color:#111"')}</div><h2>${esc(G.cim)}</h2><p style="font-size:22px">Nyissátok meg a telefonon, csapatonként egyet:</p><div class="qrhely" data-qr="${esc(appCim(""))}" data-meret="260"></div><p class="kod" style="font-size:16px;letter-spacing:.02em;word-break:break-all">${esc(appCim(""))}</p><p style="font-size:20px">Az indítókódot a játékmester mondja be, vagy a kivetítőn lévő QR-kódban van.</p></div>`));
+  lapok.push(lap("Plakát a csapatoknak", "1–2 példány", `<div class="cimkelap" style="border:0;min-height:auto"><div style="display:flex;justify-content:center">${logoBlokk(jmSzo("jatek", "nyomozós csapatjáték"), 72).replace('class="marka"', 'class="marka" style="color:#111"')}</div><h2>${esc(G.cim)}</h2><p style="font-size:22px">Nyissátok meg a telefonon, csapatonként egyet:</p><div class="qrhely" data-qr="${esc(appCim(""))}" data-meret="260"></div><p class="kod" style="font-size:16px;letter-spacing:.02em;word-break:break-all">${esc(appCim(""))}</p><p style="font-size:20px">Az indítókódot a játékmester mondja be, vagy a kivetítőn lévő QR-kódban van.</p></div>`));
   // 4. Láda-címkék
   G.ladak.forEach((l, i) => lapok.push(lap("Címke a ládára", "1 példány", `<div class="cimkelap"><div class="nagyszam">${i + 1}.</div><h2>${esc(l.nev)}</h2><p style="font-size:24px">Időzár: a játék <b>${l.nyilik}. percétől</b> nyitható.</p><p style="font-size:20px">Csak a saját csapatotok borítékát vegyétek ki!<br>Zárjátok vissza, és keverjétek össze a számokat.</p></div>`)));
   // 5. Borítékok tartalma
   G.ladak.forEach(l => { if (l.pdf) return; for (let k = 1; k <= T; k++) lapok.push(lap(`Boríték · ${l.nev}`, `${k}/${T}. példány`, `<div class="iratok">${l.iratok.map(d => irat(d, { nyomtatas: true })).join("")}</div>`)); });
+  // 5b. Állomáskártyák (önkiszolgáló: a kód a behajtott alsó részen)
+  G.fejtorok.filter(f => f.allomas).forEach(f => lapok.push(lap("Állomáskártya", "1 példány az állomásra", `<div class="allomaslap">
+    <div class="nagyszam" style="font-size:64px">${esc(f.allomas.jel || "★")}</div><h2>${esc(f.allomas.cim || f.cim)}</h2>
+    <div class="allomas-utasitas">${esc(f.allomas.utasitas)}</div>
+    ${f.allomas.kellek ? `<p><b>Kell hozzá:</b> ${esc(f.allomas.kellek)}</p>` : ""}
+    <div class="hajtas">✂ - - - Hajtsd be! Ezt a részt csak a szülő nézze meg, ha a csapat teljesítette a feladatot. - - -</div>
+    <div class="allomaskod"><span>A kód:</span><b>${esc(f.kartyak.map(c => c.valasz).join(" · "))}</b></div></div>`)));
+  // 5c. Közös plakát darabjai (csapatonként egy csík)
+  if (G.kozosPlakat) for (let k = 0; k < T; k++) lapok.push(lap(G.kozosPlakat.cim || "Közös plakát", `${k + 1}/${T}. darab`, `<p style="margin:0">${esc(G.kozosPlakat.hova || "A csapat borítékjába.")} <b>${k + 1}. csapat</b></p>
+    <div class="plakatcsik" style="width:${Math.min(170, 360 / T).toFixed(1)}mm"><div style="width:${T * 100}%;margin-left:-${k * 100}%">${G.kozosPlakat.kep ? `<img src="${esc(G.kozosPlakat.kep)}" alt="" style="display:block;width:100%;height:auto">` : G.kozosPlakat.svg}</div></div><p class="kicsi" style="text-align:center;margin:0">${k + 1}. darab a ${T}-ből · balról jobbra rakjátok sorba</p>`));
   // 6. Dosszié papíron (opcionális)
   if (nyomDosszie) for (let k = 1; k <= T; k++) lapok.push(lap("Dosszié", `${k}/${T}. példány`, `<h2>${esc(G.cim)}</h2><p style="white-space:pre-wrap">${esc(G.bevezeto)}</p><p><b>A megbízás:</b> ${esc(G.megbizas)}</p>
-    <table><tr><th>Gyanúsított</th><th>Kapcsolat</th><th>Leírás</th></tr>${G.gyanusitottak.map(g => `<tr><td><b>${esc(g.nev)}</b></td><td>${esc(g.kapcsolat)}</td><td>${esc(g.leiras)}</td></tr>`).join("")}</table>
+    <table><tr><th>${esc(jmSzo("szereplok", "Gyanúsítottak"))}</th><th>Kapcsolat</th><th>Leírás</th></tr>${G.gyanusitottak.map(g => `<tr><td><b>${esc(g.nev)}</b></td><td>${esc(g.kapcsolat)}</td><td>${esc(g.leiras)}</td></tr>`).join("")}</table>
     <div class="iratok">${G.dosszie.map(d => irat(d)).join("")}</div>`));
   const jatekos = nyomResz === "jatekos";
   const mutat = jatekos ? lapok : titkos;
@@ -1010,7 +1084,7 @@ function qrRajzol(gyoker = document) {
 /* --- Eredmények --- */
 function vadPont(valasztasok) {
   const pv = G.pontozas.vadirat || {}; let p = 0; const reszl = [];
-  G.vadirat.kerdesek.forEach((q, i) => { const jo = valasztasok[i] === q.helyes; if (jo) p += pv[q.id] || 0; reszl.push(jo); });
+  G.vadirat.kerdesek.forEach((q, i) => { const jo = valasztasok[i] === q.helyes; if (jo) p += q.pont ?? pv[q.id] ?? 0; reszl.push(jo); });
   return { p, reszl };
 }
 function ranglista() {
@@ -1020,13 +1094,13 @@ function eredmenyek() {
   const r = ranglista();
   return `
   <section class="lap" style="max-width:720px"><span class="felirat halv">Eredménykód beírása</span>
-    <p>Amikor egy csapat leadja a vádiratot, a telefonjuk egy kódot mutat (pl. <span class="kod">K7M-Q2XP</span>). Írd be ide a csapatnévvel együtt.</p>
+    <p>Amikor egy csapat leadja ${esc(jmSzo("zaroT", "a vádiratot"))}, a telefonjuk egy kódot mutat (pl. <span class="kod">K7M-Q2XP</span>). Írd be ide a csapatnévvel együtt.</p>
     <form class="oszlop" id="eredmenyUrlap" autocomplete="off" style="gap:10px">
       <div class="sor"><input class="mezo" id="eCsapat" placeholder="Csapatnév" style="flex:1;min-width:180px"><input class="mezo" id="eKod" placeholder="XXX-XXXX" style="flex:1;min-width:160px;font-family:var(--f-type);letter-spacing:.15em;text-transform:uppercase"></div>
       <button class="gomb" type="submit">Hozzáadás</button><p class="ertesites hiba" id="eHiba" hidden></p></form>
   </section>
   <section class="lap"><span class="felirat halv">Ranglista</span>
-    ${r.length ? `<div class="tablaburok"><table><thead><tr><th>#</th><th>Csapat</th><th class="sz">Fejtörő + láda</th><th>Vádirat</th><th class="sz">Vádirat pont</th><th class="sz">Összesen</th><th></th></tr></thead><tbody>
+    ${r.length ? `<div class="tablaburok"><table><thead><tr><th>#</th><th>Csapat</th><th class="sz">Fejtörő + láda</th><th>${esc(jmSzo("zaro", "Vádirat"))}</th><th class="sz">${esc(jmSzo("zaro", "Vádirat"))} pont</th><th class="sz">Összesen</th><th></th></tr></thead><tbody>
     ${r.map((e, i) => `<tr><td><b>${i + 1}.</b></td><td><b>${esc(e.csapat)}</b><br><span class="kicsi halv kod" style="letter-spacing:.1em">${esc(e.kod)}</span></td><td class="sz">${e.pont}</td>
       <td class="kicsi">${G.vadirat.kerdesek.map((q, j) => `${e.reszl[j] ? "✓" : "✗"} ${esc(q.opciok[e.valasztasok[j]] ?? "?")}`).join("<br>")}</td><td class="sz">${e.vad}</td><td class="sz"><b style="font-size:20px">${e.ossz}</b></td>
       <td><button class="gomb halk" data-torol="${esc(e.kod)}">Törlés</button></td></tr>`).join("")}</tbody></table></div>` : `<p class="halv">Még nincs beírt eredmény.</p>`}
@@ -1039,14 +1113,15 @@ function kivetitoRajzol() {
   const m = perc(), r = ranglista();
   const kov = G.ladak.find(l => J.start && m < l.nyilik);
   k.innerHTML = `<button class="gomb masod bezar" data-act="kivetitoki">Bezárás</button>
-    <div>${logoBlokk("nyomozós csapatjáték", 84)}<h1 style="margin-top:18px">${esc(G.cim)}</h1><p class="k-nagy" style="color:var(--bg-muted)">${esc(G.alcim)}</p></div>
+    <div>${logoBlokk(jmSzo("jatek", "nyomozós csapatjáték"), 84)}<h1 style="margin-top:18px">${esc(G.cim)}</h1><p class="k-nagy" style="color:var(--bg-muted)">${esc(G.alcim)}</p></div>
     ${J.bejelentes ? `<p class="k-bejel">${esc(J.bejelentes)}</p>` : ""}
     <div><div class="k-cimke">Hátralévő idő</div><div class="nagyora" data-khatra>${J.start ? hatra(G.idotartam) : ido(G.idotartam) + ":00"}</div></div>
     <div class="k-racs">
       ${J.start && m < 25 ? `<div><div class="k-cimke">Csatlakozás — szkenneljétek be</div><div class="sor" style="gap:24px;align-items:center;margin-top:8px"><div style="background:#fff;padding:12px;border-radius:10px" data-qr="${esc(appCim(inditokod(J.start)))}" data-meret="260"></div><div><div class="k-cimke">vagy indítókód</div><div class="k-kod">${inditokod(J.start)}</div></div></div></div>` : ""}
       ${kov ? `<div><div class="k-cimke">Következő láda</div><div class="k-nagy">${esc(kov.nev)}</div><div class="nagyora" style="font-size:clamp(48px,6vw,96px);color:var(--bg-ink)" data-kkov="${kov.nyilik}">${hatra(kov.nyilik)}</div></div>` : ""}
     </div>
-    ${r.length ? `<div><div class="k-cimke">Állás</div><table><tbody>${r.map((e, i) => `<tr><td style="color:var(--hl);font-family:var(--f-type)">${i + 1}.</td><td>${esc(e.csapat)}</td><td style="text-align:right;font-family:var(--f-type)"><b>${e.ossz}</b></td></tr>`).join("")}</tbody></table></div>` : ""}`;
+    ${G.kozos && r.length ? `<div><div class="k-cimke">Együtt eddig</div><div class="nagyora" style="font-size:clamp(56px,8vw,120px)">★ ${r.reduce((x, e) => x + e.ossz, 0)}</div><p class="k-nagy">${r.map(e => esc(e.csapat)).join(" · ")}</p></div>` : ""}
+    ${!G.kozos && r.length ? `<div><div class="k-cimke">Állás</div><table><tbody>${r.map((e, i) => `<tr><td style="color:var(--hl);font-family:var(--f-type)">${i + 1}.</td><td>${esc(e.csapat)}</td><td style="text-align:right;font-family:var(--f-type)"><b>${e.ossz}</b></td></tr>`).join("")}</tbody></table></div>` : ""}`;
   qrRajzol(k);
 }
 

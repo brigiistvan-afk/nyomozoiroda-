@@ -42,6 +42,12 @@ html[data-skin="modern"]{
   --accent:#1d55b0; --accent-ink:#ffffff; --accent-soft:#dbe6f8; --stamp:#c0392b; --ok:#1e7a4a; --ok-soft:#dcf0e3; --hl:#fff0b3;
   --f-display:"Archivo", system-ui, sans-serif;
 }
+html[data-skin="teli"]{
+  --bg:#0f2340; --bg-2:#16305a; --bg-3:#1e3d6e; --bg-ink:#f4f8ff; --bg-muted:#c9d8f0; --bg-line:#36578a;
+  --paper:#ffffff; --paper-2:#eef4fb; --ink:#13213a; --muted:#4a5b78; --line:#cfdcec;
+  --accent:#c8202f; --accent-ink:#ffffff; --accent-soft:#fde2e4; --stamp:#c8202f; --ok:#1f7a4a; --ok-soft:#dcf0e3; --hl:#ffe08a;
+  --f-display:"Fredoka", "Baloo 2", system-ui, sans-serif;
+}
 html[data-skin="borzongos"]{
   --bg:#140f10; --bg-2:#1f1718; --bg-3:#2b2021; --bg-ink:#f1e6da; --bg-muted:#bda998; --bg-line:#433435;
   --paper:#f1e8dc; --paper-2:#e4d7c5; --ink:#1b1312; --muted:#5d4b44; --line:#c6b09a;
@@ -164,6 +170,20 @@ html[data-skin="modern"] .hatterkep{background:linear-gradient(180deg,rgba(238,2
 
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 
+/* ---------- Téli (gyerek) téma: nagyobb betű, piros-arany gombok, havas éjszaka ---------- */
+html[data-skin="teli"] body{font-size:20px}
+html[data-skin="teli"]{--paper:rgba(14,32,64,.6); --accent:#ffd36b; --hl:#ffe08a; --muted:#c9d8f0}
+html[data-skin="teli"] .gomb:not(.masod):not(.halk):not(.veszely){background:linear-gradient(180deg,#ff6b6b,#c8202f);border-color:#c8202f;color:#fff}
+html[data-skin="teli"] h1, html[data-skin="teli"] h2{font-family:var(--f-display);letter-spacing:.01em}
+html[data-skin="teli"] .hatterkep{background:linear-gradient(180deg,rgba(8,18,40,.25),rgba(8,18,40,.15) 40%,rgba(8,18,40,.55)),var(--hatter-kep,var(--hatter-alap)) center/cover no-repeat,var(--bg)}
+/* Kép a feladványban (pl. számolós, árnyékos, útvesztős) */
+.kartyakep{background:#fff;border-radius:16px;padding:10px;margin:4px 0 10px;display:flex;justify-content:center}
+.kartyakep svg{width:100%;height:auto;max-height:62vh;display:block}
+.kartya .feladat .emoji, .emojisor{font-size:1.6em;letter-spacing:.08em;line-height:1.5}
+.kartyakep img{width:100%;height:auto;border-radius:10px;display:block}
+.portre{width:88px;height:88px;border-radius:50%;object-fit:cover;flex:none;border:3px solid var(--hl);box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.i-foto img{width:100%;height:auto;display:block}
+
 </style>
 <style>
 body{font-size:17px}
@@ -188,10 +208,10 @@ ul.lista{margin:0;padding-left:20px;display:grid;gap:4px}
     <details><summary class="kicsi" style="cursor:pointer">…vagy illeszd be a szövegét</summary>
       <textarea class="mezo" id="szoveg" placeholder='{ "id": "…", "cim": "…", … }' style="margin-top:8px"></textarea></details>
 
-    <h2 style="margin-top:10px">2. Saját PDF-ek <span class="kicsi halv">(ha az ügyben van „pdf” mező)</span></h2>
-    <p class="kicsi halv">Jelöld ki egyszerre az összes PDF-et, amire az ügyfájl hivatkozik. Titkosítva kerülnek fel: a ládák PDF-jei csak a láda kódjával, a fejtörők jutalmai csak a megfejtéssel nyílnak meg.</p>
-    <label class="cimke" for="pdfek">PDF-fájlok</label>
-    <input class="mezo" id="pdfek" type="file" accept=".pdf,application/pdf" multiple>
+    <h2 style="margin-top:10px">2. Saját PDF-ek és fényképek <span class="kicsi halv">(ha az iratoknál van „pdf” vagy „kep” mező)</span></h2>
+    <p class="kicsi halv">Jelöld ki egyszerre az összes PDF-et és képet, amire az iratok hivatkoznak. Titkosítva kerülnek fel: a ládák PDF-jei csak a láda kódjával, a fejtörők jutalmai csak a megfejtéssel nyílnak meg.</p>
+    <label class="cimke" for="pdfek">PDF- és képfájlok</label>
+    <input class="mezo" id="pdfek" type="file" accept=".pdf,application/pdf,.jpg,.jpeg,.png,.webp,image/*" multiple>
 
     <h2 style="margin-top:10px">3. Játékmesteri jelszó</h2>
     <p class="kicsi halv">Ezzel nyitod majd meg az ügyet a játékmesteri konzolban. Ha elfelejted, a fájlt újra kell csomagolni.</p>
@@ -462,6 +482,10 @@ const pecset = d => d.pecset ? `<div class="i-pecset" aria-hidden="true"><span>$
 const alair = d => d.alairas ? `<div class="i-alairas">${esc(d.alairas)}</div>` : "";
 
 const pdfNev = p => typeof p === "string" ? p : p.nev;
+/** Kép: sima fájlnév/URL, vagy titkosított fájl ({fajl, kulcs, tipus}) — ez utóbbit a kezelő tölti be */
+const kepTag = (k, alt = "") => typeof k === "string"
+  ? `<img src="${esc(k)}" alt="${esc(alt || "")}" loading="lazy">`
+  : `<img class="i-titkoskep" alt="${esc(alt || "")}" data-kep-fajl="${esc(k.fajl)}" data-kep-kulcs="${esc(k.kulcs)}" data-kep-tipus="${esc(k.tipus || "image/jpeg")}" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=">`;
 function pdfResz(p, opt) {
   if (opt.nyomtatas) return `<b>Nyomtasd ki külön, és tedd a borítékba:</b><span class="i-pdfnev">${esc(pdfNev(p))}</span>`;
   if (typeof p === "string") return `<a href="${esc(p)}" target="_blank" rel="noopener">PDF megnyitása ›</a>`;
@@ -476,6 +500,21 @@ const pdfGomb = (p, felirat = "PDF megnyitása") => typeof p === "string"
 /* Titkosított PDF-ek: amint egy ilyen gomb megjelenik az oldalon, letöltjük és visszafejtjük,
    hogy a gomb egy koppintással megnyissa (a böngészők a késleltetett felugró ablakot letiltanák). */
 const pdfTar = new Map();
+async function titkosBlob(fajl, kulcs, tipus) {
+  if (!pdfTar.has(fajl)) pdfTar.set(fajl, (async () => {
+    const r = await fetch(fajl, { cache: "force-cache" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const pt = await PDF_SEGED.pdfVisszafejt(await r.arrayBuffer(), kulcs);
+    if (!pt) throw new Error("kulcs");
+    return URL.createObjectURL(new Blob([pt], { type: tipus }));
+  })());
+  try { return await pdfTar.get(fajl); } catch (e) { pdfTar.delete(fajl); throw e; }
+}
+async function kepElokeszit(img) {
+  img.dataset.kepKesz = "1";
+  try { img.src = await titkosBlob(img.dataset.kepFajl, img.dataset.kepKulcs, img.dataset.kepTipus); }
+  catch (e) { img.alt = "A kép nem tölthető be"; delete img.dataset.kepKesz; }
+}
 async function pdfElokeszit(a) {
   a.dataset.pdfKesz = "1";
   const fajl = a.dataset.pdfFajl;
@@ -501,7 +540,7 @@ const PDF_SEGED = {};
 /** Egyszer kell meghívni oldalbetöltéskor (a visszafejtő függvényt adja át). */
 function pdfKezelo(pdfVisszafejt) {
   PDF_SEGED.pdfVisszafejt = pdfVisszafejt;
-  const nez = () => document.querySelectorAll("a.i-pdfgomb:not([data-pdf-kesz])").forEach(pdfElokeszit);
+  const nez = () => { document.querySelectorAll("a.i-pdfgomb:not([data-pdf-kesz])").forEach(pdfElokeszit); document.querySelectorAll("img.i-titkoskep:not([data-kep-kesz])").forEach(kepElokeszit); };
   new MutationObserver(nez).observe(document.body, { childList: true, subtree: true });
   nez();
 }
@@ -514,7 +553,7 @@ function irat(d, opt = {}) {
   let belso;
   if (d.pdf) {
     // saját PDF: a telefonon megnyitható, nyomtatásban emlékeztető
-    belso = `${fej((IRATNEVEK[t] || "IRAT").toUpperCase(), d)}${cimsor}${d.kep ? `<div class="i-foto"><img src="${esc(d.kep)}" alt="${esc(d.cim || "")}"></div>` : ""}${d.szoveg ? szoveg(d.szoveg) : ""}
+    belso = `${fej((IRATNEVEK[t] || "IRAT").toUpperCase(), d)}${cimsor}${d.kep ? `<div class="i-foto">${kepTag(d.kep, d.cim)}</div>` : ""}${d.szoveg ? szoveg(d.szoveg) : ""}
       <div class="i-pdf">${pdfResz(d.pdf, opt)}</div>`;
     return `<article class="irat i-${esc(t)}">${azon}${belso}</article>`;
   }
@@ -532,7 +571,7 @@ function irat(d, opt = {}) {
     case "ujsag":
       belso = `<div class="i-ujsagfej">${esc(d.forras || "Fejérmegyei Hírlap")}${d.datum ? " · " + esc(d.datum) : ""}</div>${d.cim ? `<div class="i-ujsagcim">${esc(d.cim)}</div>` : ""}${szoveg(d.szoveg)}`; break;
     case "fenykep":
-      belso = `<div class="i-foto">${d.kep ? `<img src="${esc(d.kep)}" alt="${esc(d.felirat || d.cim || "")}">` : abraSvg(d.abra, d.cim)}</div>
+      belso = `<div class="i-foto">${d.kep ? kepTag(d.kep, d.felirat || d.cim) : abraSvg(d.abra, d.cim)}</div>
         <div class="i-felirat">${esc(d.felirat || d.cim || "")}</div>${d.szoveg ? `<div class="i-hatul"><b>A kép hátoldalán:</b> ${esc(d.szoveg)}</div>` : ""}`; break;
     case "helyszinrajz":
       belso = `${fej("HELYSZÍNRAJZ", d)}${cimsor}${d.rajz ? rajzSvg(d.rajz) : d.abra ? `<div class="i-foto">${abraSvg(d.abra, d.cim)}</div>` : ""}${d.szoveg ? szoveg(d.szoveg) : ""}${alair(d)}`; break;
@@ -542,7 +581,7 @@ function irat(d, opt = {}) {
   return `<article class="irat i-${esc(t)}${d.egett ? " i-egett" : ""}">${azon}${belso}</article>`;
 }
 
-return { esc, ABRAK, ABRA_NEVEK, pdfGomb, pdfKezelo, irat };
+return { esc, ABRAK, ABRA_NEVEK, kepTag, pdfGomb, pdfKezelo, irat };
 })();
 const BETUK = (() => {
 
@@ -554,7 +593,8 @@ const DISZ = {
   noir1920: "family=DM+Serif+Display:ital@0;1",
   vadasz: "family=Cormorant+Garamond:wght@600;700",
   modern: "family=Archivo:wght@700;800",
-  borzongos: "family=IM+Fell+English:ital@0;1"
+  borzongos: "family=IM+Fell+English:ital@0;1",
+  teli: "family=Fredoka:wght@500;700"
 };
 function temaBeallit(tema) {
   const t = DISZ[tema] ? tema : "noir1920";
@@ -571,7 +611,7 @@ const K = KOZOS; const { ABRA_NEVEK } = IRATOK;
 // Ügyfájl ellenőrzése és csomagolása (titkosítása) — a böngészőben (Csomagoló) és a buildben (Node) is ezt használjuk.
 
 
-const TEMAK = ["noir1920", "vadasz", "modern", "borzongos"];
+const TEMAK = ["noir1920", "vadasz", "modern", "borzongos", "teli"];
 const IRATTIPUSOK = ["pdf", "jegyzokonyv", "vallomas", "level", "tavirat", "naplo", "feljegyzes", "nyugta", "dokumentum", "ujsag", "fenykep", "helyszinrajz"];
 const NEHEZSEGEK = ["konnyu", "kozepes", "nehez"];
 
@@ -606,6 +646,8 @@ function ellenoriz(u, fajl = "ügyfájl") {
     if (p.nehezseg && !NEHEZSEGEK.includes(p.nehezseg)) h(`${p.id}: a nehézség lehet ${NEHEZSEGEK.join(" / ")}`);
     (p.kartyak || []).forEach((c, i) => { if (!c.szoveg) h(`${p.id}: a ${i + 1}. kártyának nincs szövege`); if (!K.norm(c.valasz)) h(`${p.id}: a ${i + 1}. kártyának nincs (vagy csak írásjelből álló) válasza`); });
     if (!(p.sugok || []).length) f(`${p.id}: nincs súgó`);
+    if (p.allomas && !p.allomas.utasitas) h(`${p.id}: az állomásnak nincs „utasitas” mezője`);
+    (p.kartyak || []).forEach((c, i) => { if (c.kep && !/^\s*<svg[\s>]/i.test(c.kep) && !/\.(jpe?g|png|webp)$/i.test(c.kep)) h(`${p.id}: a ${i + 1}. kártya „kep” mezője <svg>…</svg> vagy képfájl (.jpg, .png) lehet`); });
     (p.jutalom || []).forEach(d => iratEll(d, `${p.id} jutalma`));
   });
   if (!(u.ladak || []).length) f("nincs láda — a játék ládák nélkül is működik");
@@ -624,11 +666,12 @@ function ellenoriz(u, fajl = "ügyfájl") {
     (l.iratok || []).forEach(d => iratEll(d, `${l.id} iratai`));
   });
   (u.vadirat?.kerdesek || []).forEach(q => {
-    if (!["tettes", "inditek", "fegyver", "ido"].includes(q.id)) h(`vádirat: ismeretlen kérdés „${q.id}” (tettes / inditek / fegyver / ido)`);
+    if (!q.id) h("záró kérdés: hiányzik az „id”");
+    if (q.pont == null && u.pontozas?.vadirat?.[q.id] == null) h(`záró kérdés „${q.id}”: nincs pontérték (adj meg „pont” mezőt)`);
     if (!Array.isArray(q.opciok) || q.opciok.length < 2 || q.opciok.length > 8) h(`vádirat „${q.id}”: 2–8 válaszlehetőség kell`);
     if (!(q.helyes >= 0 && q.helyes < (q.opciok || []).length)) h(`vádirat „${q.id}”: a „helyes” index nem jó`);
   });
-  if ((u.vadirat?.kerdesek || []).length !== 4) h("a vádiratban pontosan 4 kérdés kell: tettes, inditek, fegyver, ido");
+  if ((u.vadirat?.kerdesek || []).length !== 4) h("a záró részben (vadirat) pontosan 4 kérdés kell");
   return { hibak, figy };
 }
 
@@ -637,7 +680,12 @@ function ellenoriz(u, fajl = "ügyfájl") {
 const osszesIrat = u => [...(u.dosszie || []), ...(u.fejtorok || []).flatMap(p => p.jutalom || []), ...(u.ladak || []).flatMap(l => l.iratok || [])];
 /** Az ügyben hivatkozott, még nem titkosított PDF-fájlnevek. */
 const pdfTartok = u => [...osszesIrat(u), ...(u.ladak || [])];   // iratok és ládák is kaphatnak PDF-et
-const kellPdfek = u => [...new Set(pdfTartok(u).filter(d => typeof d.pdf === "string").map(d => d.pdf))];
+/** Helyi képfájl-e (nem webcím, nem beágyazott adat, nem SVG-kód) */
+const helyiKep = k => typeof k === "string" && /\.(jpe?g|png|webp)$/i.test(k) && !/^(https?:|data:)/i.test(k);
+/** Az ügyben hivatkozott, még nem titkosított fájlok: PDF-ek és az iratok fényképei */
+const kellPdfek = u => [...new Set([
+  ...pdfTartok(u).filter(d => typeof d.pdf === "string").map(d => d.pdf),
+  ...osszesIrat(u).filter(d => helyiKep(d.kep)).map(d => d.kep)])];
 /**
  * A „pdf”: "valami.pdf" hivatkozásokat titkosított fájlra cseréli.
  * pdfek: { "valami.pdf": Uint8Array }. Vissza: { ugy (új másolat), fajlok: [{ nev, adat }], hianyzik: [...] }
@@ -649,16 +697,19 @@ async function pdfekBecsomagolasa(u, pdfek) {
   const hianyzik = kellPdfek(ugy).filter(n => !pdfek[n]);
   if (hianyzik.length) return { ugy, fajlok: [], hianyzik };
   const kesz = new Map(), fajlok = [];
-  for (const d of pdfTartok(ugy)) {
-    if (typeof d.pdf !== "string") continue;
-    if (!kesz.has(d.pdf)) {
-      const { adat, kulcs } = await K.pdfTitkosit(pdfek[d.pdf]);
+  const titkosit = async eredeti => {
+    if (!kesz.has(eredeti)) {
+      const { adat, kulcs } = await K.pdfTitkosit(pdfek[eredeti]);
       const nev = `${ugy.id}-${Array.from(globalThis.crypto.getRandomValues(new Uint8Array(6)), b => b.toString(16).padStart(2, "0")).join("")}.bin`;
-      fajlok.push({ nev, adat, eredeti: d.pdf });
-      kesz.set(d.pdf, { fajl: nev, kulcs, nev: d.pdf });
+      const ext = eredeti.split(".").pop().toLowerCase();
+      const tipus = ext === "pdf" ? "application/pdf" : ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+      fajlok.push({ nev, adat, eredeti });
+      kesz.set(eredeti, { fajl: nev, kulcs, nev: eredeti, tipus });
     }
-    d.pdf = kesz.get(d.pdf);
-  }
+    return kesz.get(eredeti);
+  };
+  for (const d of pdfTartok(ugy)) if (typeof d.pdf === "string") d.pdf = await titkosit(d.pdf);
+  for (const d of osszesIrat(ugy)) if (helyiKep(d.kep)) d.kep = await titkosit(d.kep);
   return { ugy, fajlok, hianyzik: [] };
 }
 
@@ -670,7 +721,7 @@ async function csomagol(u, JELSZO) {
   for (const p of u.fejtorok) {
     const so = K.veletlenSo();
     const kartyak = [];
-    for (const [i, c] of p.kartyak.entries()) kartyak.push({ cim: c.cim || "", szoveg: c.szoveg, hash: await K.lenyomat(c.valasz, so + ":" + i) });
+    for (const [i, c] of p.kartyak.entries()) kartyak.push({ cim: c.cim || "", szoveg: c.szoveg, ...(c.kep ? { kep: c.kep } : {}), hash: await K.lenyomat(c.valasz, so + ":" + i) });
     const titok = await K.titkosit({ jutalom: p.jutalom, magyarazat: p.magyarazat }, K.fejtoroKulcs(p.kartyak.map(c => c.valasz)), so, K.ITER_TITOK);
     fejtorok.push({ id: p.id, cim: p.cim, felvonas: p.felvonas || 1, nyilik: +p.nyilik || 0, nehezseg: p.nehezseg, mechanika: p.mechanika || "", kartyak, sugok: p.sugok || [], so, titok });
   }
@@ -688,9 +739,11 @@ async function csomagol(u, JELSZO) {
     formatum: 1, id: u.id, cim: u.cim, alcim: u.alcim, tema: u.tema, jatekosok: u.jatekosok || "", idotartam: +u.idotartam, sorrend: u.sorrend ?? 0, hatter: u.hatter || "",
     korszak: u.korszak || "", helyszin: u.helyszin || "", bevezeto: u.bevezeto, megbizas: u.megbizas,
     aldozat: u.aldozat,
-    gyanusitottak: u.gyanusitottak.map(g => ({ id: g.id, nev: g.nev, kor: g.kor, kapcsolat: g.kapcsolat, leiras: g.leiras })),
+    gyanusitottak: u.gyanusitottak.map(g => ({ id: g.id, nev: g.nev, kor: g.kor, kapcsolat: g.kapcsolat, leiras: g.leiras, ...(g.kep ? { kep: g.kep } : {}) })),
     dosszie: u.dosszie, fejtorok, ladak,
-    vadirat: { nyilik: +(u.vadirat.nyilik ?? 0), kerdesek: u.vadirat.kerdesek.map(q => ({ id: q.id, kerdes: q.kerdes, opciok: q.opciok })) },
+    vadirat: { nyilik: +(u.vadirat.nyilik ?? 0), bevezeto: u.vadirat.bevezeto || "", kerdesek: u.vadirat.kerdesek.map(q => ({ id: q.id, kerdes: q.kerdes, opciok: q.opciok, ...(q.pont != null ? { pont: +q.pont } : {}) })) },
+    ...(u.szavak ? { szavak: u.szavak } : {}),
+    ...(u.kozos ? { kozos: true } : {}),
     pontozas: u.pontozas,
     jm: { so: jmSo, ...jm }
   };
@@ -703,7 +756,7 @@ const csomagolt = u => u && u.formatum === 1 && u.jm && u.jm.ct && Array.isArray
 const listaSor = u => ({ id: u.id, cim: u.cim, alcim: u.alcim, tema: u.tema, jatekosok: u.jatekosok || "", idotartam: +u.idotartam, sorrend: u.sorrend ?? 0,
   fejtorok: (u.fejtorok || []).length, ladak: (u.ladak || []).length, sorrend: u.sorrend ?? 0 });
 
-return { ellenoriz, osszesIrat, kellPdfek, pdfekBecsomagolasa, csomagol, csomagolt, listaSor };
+return { ellenoriz, osszesIrat, helyiKep, kellPdfek, pdfekBecsomagolasa, csomagol, csomagolt, listaSor };
 })();
 const UGYLISTA = (() => {
 const { listaSor } = CSOMAG;
@@ -821,7 +874,7 @@ $("#urlap").addEventListener("submit", async e => {
   const pdfek = {};
   for (const pf of $("#pdfek").files) pdfek[pf.name] = new Uint8Array(await pf.arrayBuffer());
   const hiany = kell.filter(n => !pdfek[n]);
-  if (hiany.length) return hiba(`Hiányzó PDF${hiany.length > 1 ? "-ek" : ""} — jelöld ki ${hiany.length > 1 ? "ezeket" : "ezt"} is a 2. pontnál:`, hiany);
+  if (hiany.length) return hiba(`Hiányzó fájl${hiany.length > 1 ? "ok" : ""} — jelöld ki ${hiany.length > 1 ? "ezeket" : "ezt"} is a 2. pontnál:`, hiany);
   ki.innerHTML = `<p>Csomagolás… (néhány másodperc)</p>`;
   const { ugy, fajlok } = await pdfekBecsomagolasa(u, pdfek);
   const pub = await csomagol(ugy, j1);
@@ -833,7 +886,7 @@ $("#urlap").addEventListener("submit", async e => {
     <p>${u.fejtorok.length} fejtörő · ${(u.ladak || []).length} láda · ${u.dosszie.length} dossziéirat</p>
     ${figy.length ? `<div class="ertesites"><b>Figyelmeztetések</b> (nem akadályozzák a játékot):<ul class="lista">${figy.map(s => `<li>${esc(s)}</li>`).join("")}</ul></div>` : ""}
     ${jsonLink}
-    ${fajlok.length ? `<p><b>${fajlok.length} titkosított PDF</b> — ezeket is töltsd le, és töltsd fel ugyanoda:</p>
+    ${fajlok.length ? `<p><b>${fajlok.length} titkosított fájl</b> — ezeket is töltsd le, és töltsd fel ugyanoda:</p>
       <div class="oszlop" style="gap:8px">${fajlok.map(f => link(f.adat, "application/octet-stream", f.nev, `${f.nev} (${f.eredeti})`)).join("")}</div>
       <p class="kicsi halv">A .bin fájlok önmagukban olvashatatlanok, és a nevük véletlenszerű. Újracsomagoláskor új nevet kapnak: a régi .bin fájlokat ilyenkor törölheted a repóból.</p>` : ""}
     <p class="kicsi halv">${fajlok.length ? "A fájlokat" : "A fájlt"} töltsd fel a repó főoldalára (ahol az index.html van).</p>`;
