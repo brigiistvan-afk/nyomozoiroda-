@@ -450,17 +450,24 @@ function inditokodbol(kod, most = Date.now()) {
 function inditokod(ts) { const d = new Date(ts); return String(d.getHours()).padStart(2, "0") + String(d.getMinutes()).padStart(2, "0"); }
 
 /* ---------- Pontozás (a csapat telefonja számolja a fejtörő- és ládapontokat) ---------- */
-function fejtoroPont(pontozas, nehezseg, sugoSzam) {
+/* Rossz tippek: alapból 1 ingyenes, utána tippenként −2 pont és egyre hosszabb várakozás.
+   Ügyenként felülírható: "pontozas": { "tipp": { "ingyen": 2, "levonas": 1, "varas": [30, 60, 120, 180] } } (pl. gyerekjátékhoz) */
+const TIPP_ALAP = { ingyen: 1, levonas: 2, varas: [60, 120, 240, 300] };
+const tippSzabaly = pontozas => ({ ...TIPP_ALAP, ...((pontozas && pontozas.tipp) || {}) });
+const tippLevonas = (hiba, pontozas) => { const t = tippSzabaly(pontozas); return Math.max(0, (hiba || 0) - t.ingyen) * t.levonas; };
+/** Várakozás másodpercben a hiba-adik rossz tipp után */
+const tippVaras = (hiba, pontozas) => { const t = tippSzabaly(pontozas); return hiba <= t.ingyen ? 0 : t.varas[Math.min(hiba - t.ingyen - 1, t.varas.length - 1)]; };
+function fejtoroPont(pontozas, nehezseg, sugoSzam, hiba = 0) {
   const alap = (pontozas.fejtoro || {})[nehezseg] ?? 8;
-  return Math.max(Math.ceil(alap / 2), alap - sugoSzam * (pontozas.sugo ?? 2));
+  return Math.max(Math.ceil(alap / 2), alap - sugoSzam * (pontozas.sugo ?? 2) - tippLevonas(hiba, pontozas));
 }
-function ladaPont(pontozas, percAKapuUtan, sugoSzam = 0) {
+function ladaPont(pontozas, percAKapuUtan, sugoSzam = 0, hiba = 0) {
   const sav = pontozas.lada || [10, 8, 6, 4];      // 0–10 perc, 10–20, 20–30, utána
   const i = Math.min(sav.length - 1, Math.floor(Math.max(0, percAKapuUtan) / 10));
-  return Math.max(2, sav[i] - sugoSzam * (pontozas.sugo ?? 2));
+  return Math.max(2, sav[i] - sugoSzam * (pontozas.sugo ?? 2) - tippLevonas(hiba, pontozas));
 }
 
-return { ITER_KARTYA, ITER_TITOK, ITER_JM, norm, b64, veletlenSo, lenyomat, egyezik, titkosit, visszafejt, pdfTitkosit, pdfVisszafejt, fejtoroKulcs, eredmenyKod, eredmenyKodOlvas, ido, inditokodbol, inditokod, fejtoroPont, ladaPont };
+return { ITER_KARTYA, ITER_TITOK, ITER_JM, norm, b64, veletlenSo, lenyomat, egyezik, titkosit, visszafejt, pdfTitkosit, pdfVisszafejt, fejtoroKulcs, eredmenyKod, eredmenyKodOlvas, ido, inditokodbol, inditokod, tippSzabaly, tippLevonas, tippVaras, fejtoroPont, ladaPont };
 })();
 const IRATOK = (() => {
 
@@ -928,7 +935,7 @@ return { MARKA, LOGO_SVG, logoJel, logoBlokk, faviconBeallit };
 })();
 
 
-const { pdfVisszafejt, norm, egyezik, visszafejt, fejtoroKulcs, ITER_TITOK, eredmenyKod, inditokodbol, fejtoroPont, ladaPont } = KOZOS;
+const { tippVaras, tippSzabaly, pdfVisszafejt, norm, egyezik, visszafejt, fejtoroKulcs, ITER_TITOK, eredmenyKod, inditokodbol, fejtoroPont, ladaPont } = KOZOS;
 const { irat, esc, pdfKezelo, pdfGomb } = IRATOK;
 const { temaBeallit } = BETUK;
 const { logoJel, logoBlokk, faviconBeallit, MARKA } = LOGO;
@@ -972,7 +979,7 @@ const ALAPSZAVAK = { jatek: "nyomozós csapatjáték", ugy: "Az ügy", elsoCim: 
 let SZ = ALAPSZAVAK;
 let qrKod = "";
 let nezet = "feladatok", reszlet = null, aktaFul = "ugy", iratSzuro = "mind";
-const ures = () => ({ csapat: "", start: null, olvasott: false, kartya: {}, megoldott: {}, sugo: {}, ladak: {}, latott: {}, naplo: "", szabaly: false, vad: { valasz: [null, null, null, null], indoklas: "", leadva: null, kod: "" } });
+const ures = () => ({ csapat: "", start: null, olvasott: false, kartya: {}, megoldott: {}, sugo: {}, hiba: {}, zar: {}, ladak: {}, latott: {}, naplo: "", szabaly: false, vad: { valasz: [null, null, null, null], indoklas: "", leadva: null, kod: "" } });
 const kulcs = () => "nyi:" + U.id;
 function ment() { if (!tarolo.set(kulcs(), A)) uzen("A böngésző nem engedi a mentést. Ne zárjátok be az oldalt játék közben.", "hiba"); }
 
@@ -1023,8 +1030,8 @@ async function ugyBetolt(id) {
 /* ---------------- Számítások ---------------- */
 function pontok() {
   let p = 0;
-  for (const f of U.fejtorok) if (A.megoldott[f.id]) p += fejtoroPont(U.pontozas, f.nehezseg, A.sugo[f.id] || 0);
-  for (const l of U.ladak) { const s = A.ladak[l.id]; if (s?.ido != null) p += ladaPont(U.pontozas, s.ido - l.nyilik, A.sugo[l.id] || 0); }
+  for (const f of U.fejtorok) if (A.megoldott[f.id]) p += fejtoroPont(U.pontozas, f.nehezseg, A.sugo[f.id] || 0, (A.hiba || {})[f.id] || 0);
+  for (const l of U.ladak) { const s = A.ladak[l.id]; if (s?.ido != null) p += ladaPont(U.pontozas, s.ido - l.nyilik, A.sugo[l.id] || 0, (A.hiba || {})[l.id] || 0); }
   return p;
 }
 /** Minden irat, amit a csapat lát: dosszié + megszerzett */
@@ -1117,19 +1124,32 @@ function feladatokOldal() {
   if (!A.vad.leadva && !nyitva(U.vadirat.nyilik)) hamar.push({ m: U.vadirat.nyilik, ik: IK.vad, cim: SZ.zaro, al: "Ekkortól adható le" });
   hamar.sort((a, b) => a.m - b.m);
   const keszek = [
-    ...U.ladak.filter(l => A.ladak[l.id]?.ido != null).map(l => ({ act: `data-lada="${l.id}"`, cim: l.nev, al: `Láda · ${Math.floor(A.ladak[l.id].ido)}. perc`, p: ladaPont(U.pontozas, A.ladak[l.id].ido - l.nyilik, A.sugo[l.id] || 0) })),
-    ...U.fejtorok.filter(f => A.megoldott[f.id]).map(f => ({ act: `data-fejtoro="${f.id}"`, cim: f.cim, al: `Fejtörő · ${Math.floor(A.megoldott[f.id].ido)}. perc`, p: fejtoroPont(U.pontozas, f.nehezseg, A.sugo[f.id] || 0) }))];
+    ...U.ladak.filter(l => A.ladak[l.id]?.ido != null).map(l => ({ act: `data-lada="${l.id}"`, cim: l.nev, al: `Láda · ${Math.floor(A.ladak[l.id].ido)}. perc`, p: ladaPont(U.pontozas, A.ladak[l.id].ido - l.nyilik, A.sugo[l.id] || 0, (A.hiba || {})[l.id] || 0) })),
+    ...U.fejtorok.filter(f => A.megoldott[f.id]).map(f => ({ act: `data-fejtoro="${f.id}"`, cim: f.cim, al: `Fejtörő · ${Math.floor(A.megoldott[f.id].ido)}. perc`, p: fejtoroPont(U.pontozas, f.nehezseg, A.sugo[f.id] || 0, (A.hiba || {})[f.id] || 0) }))];
   return `
   <section class="fokartya"><span class="felirat">${t.felirat}</span><h2>${esc(t.cim)}</h2><p>${t.szoveg}</p><button class="gomb teljes" ${t.act}>${esc(t.gomb)} ${IK.nyil}</button></section>
   <div class="halado"><div class="sor"><span>Haladás: <b>${kesz}/${ossz}</b> feladat</span><span><b>${pontok()}</b> ${SZ.pont}</span></div><div class="savok"><i style="width:${ossz ? Math.round(kesz / ossz * 100) : 0}%"></i></div></div>
   ${nyitLada.length || nyitF.length ? `<div class="szakasz"><span>Nyitott feladatok</span><span>${nyitLada.length + nyitF.length}</span></div>
-    ${nyitLada.map(l => `<button class="tetel lada" data-lada="${l.id}"><span class="jel">${IK.lada}</span><span class="szoveg"><strong>${esc(l.nev)}</strong><small>Láda · most ${ladaPont(U.pontozas, perc() - l.nyilik, A.sugo[l.id] || 0)} ${SZ.pont} jár érte</small></span><span class="nyil">${IK.nyil}</span></button>`).join("")}
-    ${nyitF.map(f => `<button class="tetel" data-fejtoro="${f.id}"><span class="jel">${esc(f.id)}</span><span class="szoveg"><strong>${esc(f.cim)}</strong><small>${esc(f.mechanika)} · ${NEHEZ[f.nehezseg]} · ${fejtoroPont(U.pontozas, f.nehezseg, A.sugo[f.id] || 0)} pont${A.kartya[f.id]?.some(Boolean) ? " · elkezdve" : ""}</small></span><span class="nyil">${IK.nyil}</span></button>`).join("")}` : ""}
+    ${nyitLada.map(l => `<button class="tetel lada" data-lada="${l.id}"><span class="jel">${IK.lada}</span><span class="szoveg"><strong>${esc(l.nev)}</strong><small>Láda · most ${ladaPont(U.pontozas, perc() - l.nyilik, A.sugo[l.id] || 0, (A.hiba || {})[l.id] || 0)} ${SZ.pont} jár érte</small></span><span class="nyil">${IK.nyil}</span></button>`).join("")}
+    ${nyitF.map(f => `<button class="tetel" data-fejtoro="${f.id}"><span class="jel">${esc(f.id)}</span><span class="szoveg"><strong>${esc(f.cim)}</strong><small>${esc(f.mechanika)} · ${NEHEZ[f.nehezseg]} · ${fejtoroPont(U.pontozas, f.nehezseg, A.sugo[f.id] || 0, (A.hiba || {})[f.id] || 0)} pont${A.kartya[f.id]?.some(Boolean) ? " · elkezdve" : ""}</small></span><span class="nyil">${IK.nyil}</span></button>`).join("")}` : ""}
   ${hamar.length ? `<div class="szakasz"><span>Hamarosan</span></div><div class="sorlista">${hamar.map(h => `<div class="s"><span class="ik">${h.ik}</span><span class="t">${esc(h.cim)}<small>${esc(h.al)}</small></span><span class="v" data-vissza="${h.m}">${vissza(h.m)}</span></div>`).join("")}</div>` : ""}
   ${keszek.length ? `<details class="kesz-lista"><summary class="szakasz"><span>Megoldva · ${keszek.length}</span><span>megnézem ›</span></summary><div class="sorlista" style="margin-top:10px">${keszek.map(k => `<button class="s kesz" ${k.act}><span class="ik">${IK.pipa}</span><span class="t">${esc(k.cim)}<small>${esc(k.al)}</small></span><span class="v">+${k.p}</span></button>`).join("")}</div></details>` : ""}`;
 }
 
 /* --- Súgó blokk --- */
+/* Rossz tippek kezelése: várakozás + pontlevonás (a végigpróbálgatás ellen) */
+const zarHatra = id => Math.max(0, Math.ceil((((A.zar || {})[id] || 0) - Date.now()) / 1000));
+const mmss = s => Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+function rosszTipp(id) {
+  A.hiba = A.hiba || {}; A.zar = A.zar || {};
+  const t = tippSzabaly(U.pontozas), h = A.hiba[id] = (A.hiba[id] || 0) + 1, v = tippVaras(h, U.pontozas);
+  if (v) A.zar[id] = Date.now() + v * 1000;
+  ment();
+  return h <= t.ingyen ? `Ez még nem jó. ${h === t.ingyen ? "Figyelem: a következő rossz tipptől várakozás és pontlevonás jár!" : "Nézzétek át újra a feltételeket!"}`
+    : `Ez sem jó. −${t.levonas} ${SZ.pont}, és ${mmss(v)} pihenő, mielőtt újra próbálkozhattok. Gondolkodjatok, ne találgassatok!`;
+}
+const zarSor = id => `<p class="ertesites hiba" data-zarora="${id}" ${zarHatra(id) ? "" : "hidden"}>Pihenő: <b>${mmss(zarHatra(id))}</b> — addig gondoljátok át újra.</p>`;
+const tippInfo = id => { const t = tippSzabaly(U.pontozas); return `<p class="kicsi halv" style="margin:0">${t.ingyen === 1 ? "Az első rossz tipp" : `Az első ${t.ingyen} rossz tipp`} ingyenes, utána tippenként −${t.levonas} ${SZ.pont} és várakozás jár.${(A.hiba || {})[id] ? ` Eddig ${A.hiba[id]} rossz tipp.` : ""}</p>`; };
 function sugoBlokk(id, sugok, lezart) {
   const n = A.sugo[id] || 0;
   if (!sugok.length) return "";
@@ -1141,19 +1161,23 @@ function sugoBlokk(id, sugok, lezart) {
 
 /* --- Fejtörő --- */
 function fejtoroOldal(id) {
-  const f = U.fejtorok.find(x => x.id === id), m = A.megoldott[id], k = A.kartya[id] || [];
-  const tobb = f.kartyak.length > 1;
+  const f = U.fejtorok.find(x => x.id === id), m = A.megoldott[id];
+  const tobb = f.kartyak.length > 1, k = tobb && !m ? [] : (A.kartya[id] || []);
+  const urlapId = "fo-" + f.id;
   return `<button class="vissza" data-act="vissza">${IK.vissza} Feladatok</button>
   <section class="lap">
-    <div class="reszletfej"><div class="sor"><span class="cimke-pill">${esc(f.mechanika)}</span><span class="cimke-pill">${NEHEZ[f.nehezseg]}</span><span class="cimke-pill">${fejtoroPont(U.pontozas, f.nehezseg, A.sugo[id] || 0)} ${SZ.pont}</span></div>
-      <h2>${esc(f.cim)}</h2>${tobb && !m ? `<p class="halv">${f.kartyak.length} részből áll. A részek külön is megoldhatók, osszátok szét!</p>` : ""}</div>
+    <div class="reszletfej"><div class="sor"><span class="cimke-pill">${esc(f.mechanika)}</span><span class="cimke-pill">${NEHEZ[f.nehezseg]}</span><span class="cimke-pill">${fejtoroPont(U.pontozas, f.nehezseg, A.sugo[id] || 0, (A.hiba || {})[id] || 0)} ${SZ.pont}</span></div>
+      <h2>${esc(f.cim)}</h2>${tobb && !m ? `<p class="halv">${f.kartyak.length} részből áll. Osszátok szét a részeket, de a megfejtéseket a végén együtt kell ellenőrizni — az app csak azt mondja meg, hogy mind jó-e.</p>` : ""}</div>
     ${f.kartyak.map((c, i) => `<div class="kartya ${k[i] ? "ok" : ""}">
       ${tobb || c.cim ? `<span class="resz">${tobb ? String.fromCharCode(65 + i) + " rész" : ""}${tobb && c.cim ? " · " : ""}${esc(c.cim || "")}</span>` : ""}
       ${c.kep ? `<div class="kartyakep">${/^\s*<svg/i.test(c.kep) ? c.kep : `<img src="${esc(c.kep)}" alt="${esc(c.cim || f.cim)}">`}</div>` : ""}<div class="feladat">${esc(c.szoveg)}</div>
       ${k[i] ? `<div class="helyes">${IK.pipa} Helyes: ${esc(k[i])}</div>`
-        : m ? "" : `<form class="valasz" data-kartya="${f.id}|${i}" autocomplete="off"><input class="mezo" name="v" aria-label="${tobb ? String.fromCharCode(65 + i) + " rész megfejtése" : "Megfejtés"}" placeholder="Megfejtés" autocapitalize="characters" spellcheck="false"><button class="gomb teljes" type="submit">Ellenőrzés</button><p class="allapot" data-uzenet="${f.id}|${i}" role="status"></p></form>`}
+        : m ? "" : tobb ? `<label class="cimke" for="${urlapId}-${i}" style="margin:0">${String.fromCharCode(65 + i)} rész megfejtése</label><input class="mezo" id="${urlapId}-${i}" form="${urlapId}" name="v${i}" placeholder="Megfejtés" autocapitalize="characters" spellcheck="false" autocomplete="off">`
+        : `<form class="valasz" data-kartya="${f.id}|${i}" autocomplete="off"><input class="mezo" name="v" aria-label="${tobb ? String.fromCharCode(65 + i) + " rész megfejtése" : "Megfejtés"}" placeholder="Megfejtés" autocapitalize="characters" spellcheck="false"><button class="gomb teljes" type="submit" ${zarHatra(id) ? "disabled" : ""}>Ellenőrzés</button><p class="allapot" data-uzenet="${f.id}|${i}" role="status"></p></form>`}
     </div>`).join("")}
-    ${m ? `<p class="ertesites ok"><b>Megfejtve, +${fejtoroPont(U.pontozas, f.nehezseg, A.sugo[id] || 0)} ${SZ.pont}.</b> Az új irat bekerült az aktába.</p>
+    ${tobb && !m ? `<form class="valasz" id="${urlapId}" data-fejtoro-ossz="${f.id}" autocomplete="off"><button class="gomb teljes" type="submit" ${zarHatra(id) ? "disabled" : ""}>Mind a ${f.kartyak.length} rész ellenőrzése</button><p class="allapot" data-uzenet="${f.id}|ossz" role="status"></p></form>` : ""}
+    ${m ? "" : zarSor(id) + tippInfo(id)}
+    ${m ? `<p class="ertesites ok"><b>Megfejtve, +${fejtoroPont(U.pontozas, f.nehezseg, A.sugo[id] || 0, (A.hiba || {})[id] || 0)} ${SZ.pont}.</b> Az új irat bekerült az aktába.</p>
       <p class="halv"><b>A megoldás menete:</b> ${esc(m.magyarazat)}</p>
       ${(m.jutalom || []).map(d => irat(d)).join("")}` : sugoBlokk(id, f.sugok)}
   </section>`;
@@ -1166,18 +1190,19 @@ function ladaOldal(id) {
   <section class="lap">
     <div class="reszletfej"><div class="sor"><span class="cimke-pill">Láda</span><span class="cimke-pill">${l.szamjegy} számjegyű lakat</span></div><h2>${esc(l.nev)}</h2>
     <p class="halv">Hol van: <b style="color:var(--ink)">${esc(l.hely)}</b></p></div>
-    <span class="pontjel">Most ${ladaPont(U.pontozas, perc() - l.nyilik, A.sugo[id] || 0)} ${SZ.pont} jár érte · tíz percenként csökken</span>
+    <span class="pontjel">Most ${ladaPont(U.pontozas, perc() - l.nyilik, A.sugo[id] || 0, (A.hiba || {})[id] || 0)} ${SZ.pont} jár érte · tíz percenként csökken</span>
     <div class="kartya"><span class="resz">${esc(l.rejtveny.cim)}</span><div class="feladat">${esc(l.rejtveny.szoveg)}</div></div>
     <form class="valasz" data-ladakod="${l.id}" autocomplete="off">
       <label class="cimke" for="kod-${l.id}" style="margin:0">A lakat kódja</label>
       <input class="mezo kod" id="kod-${l.id}" name="v" inputmode="numeric" maxlength="${l.szamjegy}" placeholder="${"0".repeat(l.szamjegy)}">
-      <button class="gomb teljes" type="submit">Kód ellenőrzése</button><p class="allapot" data-uzenet="${l.id}" role="status"></p>
+      <button class="gomb teljes" type="submit" ${zarHatra(id) ? "disabled" : ""}>Kód ellenőrzése</button><p class="allapot" data-uzenet="${l.id}" role="status"></p>
     </form>
+    ${zarSor(id)}${tippInfo(id)}
     ${sugoBlokk(id, l.rejtveny.sugok)}
   </section>`;
   return `<button class="vissza" data-act="vissza">${IK.vissza} Feladatok</button>
   <section class="lap">
-    <div class="reszletfej"><div class="sor"><span class="cimke-pill">Kinyitva a ${Math.floor(s.ido)}. percben</span><span class="cimke-pill">+${ladaPont(U.pontozas, s.ido - l.nyilik, A.sugo[id] || 0)} ${SZ.pont}</span></div><h2>${esc(l.nev)}</h2></div>
+    <div class="reszletfej"><div class="sor"><span class="cimke-pill">Kinyitva a ${Math.floor(s.ido)}. percben</span><span class="cimke-pill">+${ladaPont(U.pontozas, s.ido - l.nyilik, A.sugo[id] || 0, (A.hiba || {})[id] || 0)} ${SZ.pont}</span></div><h2>${esc(l.nev)}</h2></div>
     ${s.atveve ? `<p class="ertesites ok">A borítékot átvettétek. Az iratok lent és az aktában is megvannak.</p>` : `
       <div class="lakat">${esc(s.kod)}</div>
       <ol class="lepesek"><li>Menjetek a ládához: <b>${esc(l.hely)}</b></li><li>Nyissátok ki a fenti kóddal.</li><li>Vegyétek ki a <b>saját csapatotok</b> borítékját — csak egyet!</li><li>Zárjátok vissza, és keverjétek össze a számokat.</li></ol>
@@ -1272,6 +1297,7 @@ function szabalyok() {
     <li><b>Fejtörők:</b> bármilyen sorrendben megoldhatók, és szétoszthatók a csapatban. Mindegyik új iratot ad. (${sp.fejtoro.konnyu}–${sp.fejtoro.nehez} ${SZ.pont})</li>
     <li><b>Ládák:</b> időzárral nyílnak. Ha megfejtitek a kódot, írjátok be, aztán menjetek a ládához, és vegyétek ki a saját borítékotokat. Minél gyorsabbak vagytok, annál több ${SZ.pont} jár.</li>
     <li><b>Súgó:</b> ha elakadtok, kérhettek, de ${sp.sugo ?? 2} ${SZ.pontba} kerül.</li>
+    <li><b>Ne találgassatok!</b> ${tippSzabaly(sp).ingyen === 1 ? "Az első rossz tipp" : `Az első ${tippSzabaly(sp).ingyen} rossz tipp`} ingyenes, utána minden rossz tipp −${tippSzabaly(sp).levonas} ${SZ.pont}, és egyre hosszabb várakozással jár. A több részből álló feladványokat csak együtt lehet ellenőrizni.</li>
     <li><b>Akta:</b> itt találjátok az összes iratot. Az újakat piros jelzi.</li>
     <li><b>A végén:</b> leadjátok ${esc(SZ.zaroT)}, és a kapott kódot megmutatjátok a játékmesternek.</li></ol>`,
     [{ felirat: "Kezdjük!" }]);
@@ -1333,14 +1359,30 @@ document.addEventListener("submit", async e => {
     if (Date.now() - ts > U.idotartam * 60000) return mutat("Ez az indítókód egy már befejezett játékhoz tartozik. Kérjétek el a játékmestertől az új indítókódot (a konzolban: „Új játék indítása”).");
     A.csapat = nev.slice(0, 30); A.start = ts; ment(); rajzol(); return;
   }
+  if (f.dataset.fejtoroOssz) {
+    const id = f.dataset.fejtoroOssz, fj = U.fejtorok.find(x => x.id === id);
+    const msg = f.querySelector(".allapot"), gomb = f.querySelector("button");
+    const ertekek = fj.kartyak.map((_, i) => (document.querySelector(`[form="${f.id}"][name="v${i}"]`)?.value || ""));
+    if (ertekek.some(v => !norm(v))) { msg.className = "allapot rossz"; msg.textContent = "Mindegyik részhez írjatok megfejtést, csak együtt ellenőrizhetők."; return; }
+    if (zarHatra(id)) { msg.className = "allapot rossz"; msg.textContent = `Még ${mmss(zarHatra(id))} pihenő van hátra.`; return; }
+    gomb.disabled = true; msg.className = "allapot"; msg.textContent = "Ellenőrzés…";
+    const jok = await Promise.all(fj.kartyak.map((c, i) => egyezik(ertekek[i], fj.so + ":" + i, c.hash)));
+    gomb.disabled = false;
+    if (!jok.every(Boolean)) { msg.className = "allapot rossz"; msg.textContent = "Valamelyik rész még nem jó — azt nem áruljuk el, melyik. " + rosszTipp(id).replace(/^Ez (még nem|sem) jó\. ?/, ""); f.classList.remove("rezeg"); void f.offsetWidth; f.classList.add("rezeg"); if (zarHatra(id)) zarFrissit(); return; }
+    A.kartya[id] = ertekek.map(v => v.trim().toUpperCase());
+    const titok = await visszafejt(fj.titok, fejtoroKulcs(A.kartya[id]), fj.so, ITER_TITOK);
+    if (titok) { A.megoldott[id] = { ido: perc(), jutalom: titok.jutalom, magyarazat: titok.magyarazat }; ment(); rajzol(); uzen("Megfejtve! Új irat került az aktába.", "ok"); return; }
+    ment(); uzen("A válaszok helyesek, de az iratot nem sikerült megnyitni. Szóljatok a játékmesternek.", "hiba"); return;
+  }
   if (f.dataset.kartya) {
     const [id, i] = f.dataset.kartya.split("|"), idx = +i, fj = U.fejtorok.find(x => x.id === id);
     const ertek = f.v.value, msg = f.querySelector(".allapot"), gomb = f.querySelector("button");
     if (!norm(ertek)) { msg.className = "allapot rossz"; msg.textContent = "Írjátok be a megfejtést."; return; }
+    if (zarHatra(id)) { msg.className = "allapot rossz"; msg.textContent = `Még ${mmss(zarHatra(id))} pihenő van hátra.`; return; }
     gomb.disabled = true; msg.className = "allapot"; msg.textContent = "Ellenőrzés…";
     const jo = await egyezik(ertek, fj.so + ":" + idx, fj.kartyak[idx].hash);
     gomb.disabled = false;
-    if (!jo) { msg.className = "allapot rossz"; msg.textContent = "Ez még nem jó. Nézzétek át újra a feltételeket!"; f.classList.remove("rezeg"); void f.offsetWidth; f.classList.add("rezeg"); return; }
+    if (!jo) { msg.className = "allapot rossz"; msg.textContent = rosszTipp(id); f.classList.remove("rezeg"); void f.offsetWidth; f.classList.add("rezeg"); if (zarHatra(id)) zarFrissit(); return; }
     A.kartya[id] = A.kartya[id] || []; A.kartya[id][idx] = ertek.trim().toUpperCase();
     if (fj.kartyak.every((_, j) => A.kartya[id][j])) {
       const titok = await visszafejt(fj.titok, fejtoroKulcs(A.kartya[id]), fj.so, ITER_TITOK);
@@ -1353,10 +1395,11 @@ document.addEventListener("submit", async e => {
     const id = f.dataset.ladakod, l = U.ladak.find(x => x.id === id);
     const ertek = f.v.value.replace(/\D/g, ""), msg = f.querySelector(".allapot"), gomb = f.querySelector("button");
     if (ertek.length !== l.szamjegy) { msg.className = "allapot rossz"; msg.textContent = `A kód ${l.szamjegy} számjegyből áll.`; return; }
+    if (zarHatra(id)) { msg.className = "allapot rossz"; msg.textContent = `Még ${mmss(zarHatra(id))} pihenő van hátra.`; return; }
     gomb.disabled = true; msg.className = "allapot"; msg.textContent = "Ellenőrzés…";
     const jo = await egyezik(ertek, l.so + ":lada", l.hash);
     gomb.disabled = false;
-    if (!jo) { msg.className = "allapot rossz"; msg.textContent = "Nem ez a kód. Ellenőrizzétek a megfejtést!"; f.classList.remove("rezeg"); void f.offsetWidth; f.classList.add("rezeg"); return; }
+    if (!jo) { msg.className = "allapot rossz"; msg.textContent = rosszTipp(id); f.classList.remove("rezeg"); void f.offsetWidth; f.classList.add("rezeg"); if (zarHatra(id)) zarFrissit(); return; }
     const titok = await visszafejt(l.titok, norm(ertek), l.so, ITER_TITOK);
     A.ladak[id] = { ido: perc(), kod: ertek, iratok: titok?.iratok || [], magyarazat: titok?.magyarazat || "", pdf: titok?.pdf || null, atveve: false };
     ment(); menj(() => {}); return;
@@ -1375,8 +1418,17 @@ document.addEventListener("input", e => {
 /* ---------------- Óra ---------------- */
 let utolsoAllapot = "";
 const jelzett = new Set();
+/* a pihenő alatt a gombok tiltva, a visszaszámláló fut, a végén újra engedélyezzük */
+function zarFrissit() {
+  document.querySelectorAll("[data-zarora]").forEach(el => {
+    const id = el.dataset.zarora, t = zarHatra(id);
+    el.hidden = !t; if (t) el.querySelector("b").textContent = mmss(t);
+    document.querySelectorAll(`form[data-kartya^="${id}|"] button, form[data-ladakod="${id}"] button, form[data-fejtoro-ossz="${id}"] button`).forEach(b => { b.disabled = !!t; });
+  });
+}
 function ketyeg() {
   if (!U || !A?.start) return;
+  zarFrissit();
   const o = $("[data-ora]"); if (o) { o.innerHTML = oraSzoveg(); o.classList.toggle("vege", U.idotartam - perc() <= 0); }
   document.querySelectorAll("[data-vissza]").forEach(el => { el.textContent = vissza(+el.dataset.vissza); });
   const most = [...U.fejtorok.map(f => nyitva(f.nyilik)), ...U.ladak.map(l => nyitva(l.nyilik)), nyitva(U.vadirat.nyilik)].join("");

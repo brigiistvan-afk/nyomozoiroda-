@@ -368,17 +368,24 @@ function inditokodbol(kod, most = Date.now()) {
 function inditokod(ts) { const d = new Date(ts); return String(d.getHours()).padStart(2, "0") + String(d.getMinutes()).padStart(2, "0"); }
 
 /* ---------- Pontozás (a csapat telefonja számolja a fejtörő- és ládapontokat) ---------- */
-function fejtoroPont(pontozas, nehezseg, sugoSzam) {
+/* Rossz tippek: alapból 1 ingyenes, utána tippenként −2 pont és egyre hosszabb várakozás.
+   Ügyenként felülírható: "pontozas": { "tipp": { "ingyen": 2, "levonas": 1, "varas": [30, 60, 120, 180] } } (pl. gyerekjátékhoz) */
+const TIPP_ALAP = { ingyen: 1, levonas: 2, varas: [60, 120, 240, 300] };
+const tippSzabaly = pontozas => ({ ...TIPP_ALAP, ...((pontozas && pontozas.tipp) || {}) });
+const tippLevonas = (hiba, pontozas) => { const t = tippSzabaly(pontozas); return Math.max(0, (hiba || 0) - t.ingyen) * t.levonas; };
+/** Várakozás másodpercben a hiba-adik rossz tipp után */
+const tippVaras = (hiba, pontozas) => { const t = tippSzabaly(pontozas); return hiba <= t.ingyen ? 0 : t.varas[Math.min(hiba - t.ingyen - 1, t.varas.length - 1)]; };
+function fejtoroPont(pontozas, nehezseg, sugoSzam, hiba = 0) {
   const alap = (pontozas.fejtoro || {})[nehezseg] ?? 8;
-  return Math.max(Math.ceil(alap / 2), alap - sugoSzam * (pontozas.sugo ?? 2));
+  return Math.max(Math.ceil(alap / 2), alap - sugoSzam * (pontozas.sugo ?? 2) - tippLevonas(hiba, pontozas));
 }
-function ladaPont(pontozas, percAKapuUtan, sugoSzam = 0) {
+function ladaPont(pontozas, percAKapuUtan, sugoSzam = 0, hiba = 0) {
   const sav = pontozas.lada || [10, 8, 6, 4];      // 0–10 perc, 10–20, 20–30, utána
   const i = Math.min(sav.length - 1, Math.floor(Math.max(0, percAKapuUtan) / 10));
-  return Math.max(2, sav[i] - sugoSzam * (pontozas.sugo ?? 2));
+  return Math.max(2, sav[i] - sugoSzam * (pontozas.sugo ?? 2) - tippLevonas(hiba, pontozas));
 }
 
-return { ITER_KARTYA, ITER_TITOK, ITER_JM, norm, b64, veletlenSo, lenyomat, egyezik, titkosit, visszafejt, pdfTitkosit, pdfVisszafejt, fejtoroKulcs, eredmenyKod, eredmenyKodOlvas, ido, inditokodbol, inditokod, fejtoroPont, ladaPont };
+return { ITER_KARTYA, ITER_TITOK, ITER_JM, norm, b64, veletlenSo, lenyomat, egyezik, titkosit, visszafejt, pdfTitkosit, pdfVisszafejt, fejtoroKulcs, eredmenyKod, eredmenyKodOlvas, ido, inditokodbol, inditokod, tippSzabaly, tippLevonas, tippVaras, fejtoroPont, ladaPont };
 })();
 const IRATOK = (() => {
 
