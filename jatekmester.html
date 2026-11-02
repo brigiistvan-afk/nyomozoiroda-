@@ -237,6 +237,10 @@ pre.szoveg{white-space:pre-wrap;font-family:var(--f-type);font-size:15px;margin:
 .hajtas{width:100%;border-top:3px dashed #111;padding-top:10px;margin-top:40px;font-family:var(--f-type);font-size:13px}
 .allomaskod{transform:rotate(180deg);font-size:28px;display:flex;flex-direction:column;align-items:center;margin-top:30px}
 .allomaskod b{font-family:var(--f-type);font-size:64px;letter-spacing:.12em}
+.kellek{position:relative;margin:0 auto}
+.kellek>svg:first-child{display:block;width:100%;height:auto}
+.kellek .vagoracs{position:absolute;inset:0;width:100%;height:100%}
+.kellek .vagoracs line{stroke:#111;stroke-width:.012;stroke-dasharray:.04 .03;vector-effect:none}
 .plakatcsik{overflow:hidden;margin:0 auto;border:2px dashed #999;break-inside:avoid}
 .plakatcsik svg,.plakatcsik img{display:block;width:100%;height:auto}
 .cimkelap{align-items:center;justify-content:center;text-align:center;min-height:60vh;gap:22px;border:6px double #111}
@@ -940,6 +944,10 @@ function vezerles() {
   const m = perc(), ev = esemenyek();
   let akt = -1; ev.forEach((x, i) => { if (J.start && m >= x.perc) akt = i; });
   return `
+  ${J.start && m > G.idotartam ? `<section class="lap" style="border:2px solid var(--hl)"><span class="felirat halv">Ez a játék már véget ért</span>
+    <h2>Új játékot indítasz?</h2>
+    <p>Az óra még az előző játékot mutatja (indítva ${new Date(J.start).toLocaleString("hu-HU", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}). A régi indítókóddal a csapatok már nem tudnak belépni.</p>
+    <div class="sor"><button class="gomb" data-act="ujjatek">Új játék indítása most</button><span class="kicsi halv">Az óra újraindul, új indítókód és QR-kód készül, az előző eredmények törlődnek.</span></div></section>` : ""}
   <section class="racs" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
     <div class="lap">
       <span class="felirat halv">Óra</span>
@@ -1044,6 +1052,14 @@ function nyomtatas() {
     ${f.allomas.kellek ? `<p><b>Kell hozzá:</b> ${esc(f.allomas.kellek)}</p>` : ""}
     <div class="hajtas">✂ - - - Hajtsd be! Ezt a részt csak a szülő nézze meg, ha a csapat teljesítette a feladatot. - - -</div>
     <div class="allomaskod"><span>A kód:</span><b>${esc(f.kartyak.map(c => c.valasz).join(" · "))}</b></div></div>`)));
+  // 5d. Kellékek: kirakós (vágóvonallal), fóliára nyomtatandó rátét, címkék stb.
+  (G.kellekek || []).forEach(k => {
+    const db = k.csapatonkent ? T : (k.peldany || 1);
+    for (let i = 1; i <= db; i++) lapok.push(lap(`Kellék · ${k.cim}`, k.csapatonkent ? `${i}/${T}. csapat` : `${i}/${db}. példány`, `
+      <p style="margin:0">${k.folia ? `<b style="color:#a3312a">ÍRÁSVETÍTŐ-FÓLIÁRA nyomtasd!</b> (Ha nincs fólia: papírra, és a fehér ablakokat vágd ki.) ` : ""}${esc(k.hova || "")}</p>
+      <div class="kellek${k.vago ? " vago" : ""}" style="width:${k.szelesseg || 170}mm">${k.svg}${k.vago ? `<svg class="vagoracs" viewBox="0 0 ${k.vago.oszlopok} ${k.vago.sorok}" preserveAspectRatio="none">${Array.from({ length: k.vago.oszlopok - 1 }, (_, j) => `<line x1="${j + 1}" y1="0" x2="${j + 1}" y2="${k.vago.sorok}"/>`).join("")}${Array.from({ length: k.vago.sorok - 1 }, (_, j) => `<line x1="0" y1="${j + 1}" x2="${k.vago.oszlopok}" y2="${j + 1}"/>`).join("")}</svg>` : ""}</div>
+      ${k.vago ? `<p class="kicsi" style="margin:0">✂ Vágd szét a szaggatott vonalak mentén ${k.vago.sorok * k.vago.oszlopok} darabra, keverd össze, és tedd a borítékba.</p>` : ""}`));
+  });
   // 5c. Közös plakát darabjai (csapatonként egy csík)
   if (G.kozosPlakat) for (let k = 0; k < T; k++) lapok.push(lap(G.kozosPlakat.cim || "Közös plakát", `${k + 1}/${T}. darab`, `<p style="margin:0">${esc(G.kozosPlakat.hova || "A csapat borítékjába.")} <b>${k + 1}. csapat</b></p>
     <div class="plakatcsik" style="width:${Math.min(170, 360 / T).toFixed(1)}mm"><div style="width:${T * 100}%;margin-left:-${k * 100}%">${G.kozosPlakat.kep ? `<img src="${esc(G.kozosPlakat.kep)}" alt="" style="display:block;width:100%;height:auto">` : G.kozosPlakat.svg}</div></div><p class="kicsi" style="text-align:center;margin:0">${k + 1}. darab a ${T}-ből · balról jobbra rakjátok sorba</p>`));
@@ -1161,7 +1177,8 @@ document.addEventListener("click", e => {
   if (d.nyomresz) { nyomResz = d.nyomresz; rajzol(); return; }
   if (d.torol) { J.eredmenyek = J.eredmenyek.filter(x => x.kod !== d.torol); ment(); rajzol(); kivetitoRajzol(); return; }
   switch (d.act) {
-    case "indit": J.start = Date.now(); J.start -= J.start % 60000; ment(); rajzol(); return;   // egész percre kerekítve, hogy az indítókód pontos legyen
+    case "indit": J.start = Date.now(); J.start -= J.start % 60000; ment(); rajzol(); return;
+    case "ujjatek": J.start = Date.now(); J.start -= J.start % 60000; J.eredmenyek = []; J.bejelentes = ""; ment(); rajzol(); return;   // egész percre kerekítve, hogy az indítókód pontos legyen
     case "nullaz":
       if (t.dataset.megerosit) { J.start = null; ment(); rajzol(); return; }
       t.dataset.megerosit = "1"; t.textContent = "Biztosan? Kattints újra a nullázáshoz"; setTimeout(() => { if (t.isConnected) { delete t.dataset.megerosit; t.textContent = "Óra nullázása"; } }, 4000); return;

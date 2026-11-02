@@ -1013,6 +1013,8 @@ async function ugyBetolt(id) {
   // ügyenként saját háttérkép is megadható ("hatter": "kepfajl.jpg"), különben az alapháttér
   try { document.documentElement.style.setProperty("--hatter-kep", U.hatter ? `url("${String(U.hatter).replace(/["\\]/g, "")}")` : ""); } catch (e) {}
   A = { ...ures(), ...tarolo.get(kulcs(), {}) };
+  // 2 órával a játék vége után a telefon tiszta lappal indul (így ugyanaz az ügy újra játszható)
+  if (A.start && Date.now() - A.start > (U.idotartam + 120) * 60000) { A = { ...ures(), csapat: A.csapat }; ment(); }
   tarolo.set("nyi:aktiv", id);
   nezet = "feladatok"; reszlet = null;
   rajzol();
@@ -1328,7 +1330,7 @@ document.addEventListener("submit", async e => {
     const mutat = m => { hiba.hidden = false; hiba.textContent = m; };
     if (!nev) return mutat("Adjatok nevet a csapatnak.");
     if (!ts) return mutat("Az indítókód négy számjegy, például 1905. Kérdezzétek meg a játékmestert.");
-    if (Date.now() - ts > U.idotartam * 60000) return mutat("Ez az indítókód egy már lejárt játékhoz tartozik. Ellenőrizzétek a számokat.");
+    if (Date.now() - ts > U.idotartam * 60000) return mutat("Ez az indítókód egy már befejezett játékhoz tartozik. Kérjétek el a játékmestertől az új indítókódot (a konzolban: „Új játék indítása”).");
     A.csapat = nev.slice(0, 30); A.start = ts; ment(); rajzol(); return;
   }
   if (f.dataset.kartya) {
